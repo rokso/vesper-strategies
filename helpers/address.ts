@@ -1,0 +1,131 @@
+import hre from "hardhat";
+
+const A = {
+  mainnet: {
+    GNOSIS_SAFE: "0x9520b477Aa81180E6DdC006Fc09Fb6d3eb4e807A",
+    ETH: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+    WETH: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    DAI: "0x6B175474E89094C44Da98b954EedeAC495271d0F",
+    USDC: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+    WBTC: "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+    VSP: "0x1b40183EFB4Dd766f11bDa7A7c3AD8982e998421",
+    stETH: "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84",
+    wstETH: "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0",
+    rETH: "0xae78736Cd615f374D3085123A210448E74Fc6393",
+    cbETH: "0xBe9895146f7AF43049ca1c1AE358B0541Ea49704",
+    masterOracle: "0x80704Acdf97723963263c78F861F091ad04F46E2",
+    swapper: "0x229f19942612A8dbdec3643CB23F88685CCd56A5",
+    MORPHO: "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb",
+    COMP: "0xc00e94Cb662C3520282E6f5717214004A7f26888",
+    AAVE: "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9",
+    Aave: {
+      stkAave: "0x4da27a545c0c5B758a6BA100e3a049001de870f5",
+      V3: {
+        poolAddressesProvider: "0x2f39d218133AFaB8F2B819B1066c7E434Ad94E9e",
+        aEthWETH: "0x4d5F47FA6A74757f35C14fD3a6Ef8E3C9BC514E8",
+        aEthUSDC: "0x98C23E9d8f34FEFb1B7BD6a91B7FF122F4e16F5c",
+        aEthwstETH: "0x0B925eD163218f6662a35e0f0371Ac234f9E9371",
+      },
+    },
+    Compound: {
+      V3: {
+        cUSDCv3: "0xc3d688B66703497DAA19211EEdff47f25384cdc3",
+        rewards: "0x1B0e765F6224C21223AeA2af16c1C46E38885a40",
+      },
+    },
+    Vesper: {
+      KEEPER: "0xf7364E230EA0e5CC41E6Cd4E2a30A26Ca1850b73", // Strategy keeper contract address
+      vaUSDC: "0xa8b607Aa09B6A2E306F93e74c282Fb13f6A80452",
+      vaDAI: "0x0538C8bAc84E95A9dF8aC10Aad17DbE81b9E36ee",
+      vaFRAX: "0xc14900dFB1Aa54e7674e1eCf9ce02b3b35157ba5",
+      vaETH: "0xd1C117319B3595fbc39b471AB1fd485629eb05F2",
+      vaWBTC: "0x01e1d41C1159b745298724c5Fd3eAfF3da1C6efD",
+      vaLINK: "0xef4F4604106de23CDadfEAE08fcC34602cB475C1",
+      vastETH: "0x4Dbe3f01aBe271D3E65432c74851625a8c30Aa7B",
+      varETH: "0xDD9F61a85fFE73E41eF889817972f0B0AaE6D6Dd",
+      vacbETH: "0x650CD45DEdb19c33160Acc522aD1a82D9701036a",
+      vamsUSD: "0x4C73F025a1947ec770327B9956Fc61f535F72C22",
+      vamsETH: "0xCa7c607C590ad16007CCBbba9D26f4df656a36C2",
+    },
+  },
+  optimism: {
+    GNOSIS_SAFE: "0x32934AD7b1121DeFC631080b58599A0eaAB89878",
+    WETH: "0x4200000000000000000000000000000000000006",
+    OP: "0x4200000000000000000000000000000000000042",
+    USDC: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
+    USDCe: "0x7F5c764cBc14f9669B88837ca1490cCa17c31607",
+    WBTC: "0x68f180fcCe6836688e9084f035309E29Bf0A2095",
+    masterOracle: "0x0aac835162D368F246dc71628AfcD6d2930c47d3",
+    swapper: "0x017CBF62b53313d5eE3aD1288daA95CD39AA11fE",
+    MORPHO: "0xce95AfbB8EA029495c66020883F87aaE8864AF92",
+    Aave: {
+      V3: {
+        poolAddressProvider: "0xa97684ead0e402dC232d5A977953DF7ECBaB3CDb",
+      },
+    },
+    Compound: {
+      V3: { rewards: "0x443EA0340cb75a160F31A440722dec7b5bc3C2E9" },
+    },
+    Vesper: {
+      KEEPER: "0xe1aA88d62d3A6b48f5d1D0C997D14C2323180f83", // Keeper contract
+      vaUSDC: "0x539505Dde2B9771dEBE0898a84441c5E7fDF6BC0",
+      vaETH: "0xCcF3d1AcF799bAe67F6e354d685295557cf64761",
+      vaOP: "0x19382707d5a47E74f60053b652Ab34b6e30Febad",
+      vawstETH: "0xdd63ae655b388Cd782681b7821Be37fdB6d0E78d",
+    },
+  },
+  base: {
+    GNOSIS_SAFE: "0x32934AD7b1121DeFC631080b58599A0eaAB89878",
+    WETH: "0x4200000000000000000000000000000000000006",
+    USDC: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    cbETH: "0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22",
+    wstETH: "0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452",
+    swapper: "0xd7c751fA32590451548B100C4f6442F062C9bc8E",
+    masterOracle: "0x99866a6074ADb027f09c9AF31929dB5941D36DA7",
+    MORPHO: "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb",
+    Aave: {
+      V3: {
+        poolAddressProvider: "0xe20fCBdBfFC4Dd138cE8b2E6FBb6CB49777ad64D",
+      },
+    },
+    Compound: {
+      V3: { rewards: "0x123964802e6ABabBE1Bc9547D72Ef1B69B00A6b1" },
+    },
+    Synth: {
+      msUSD: "0xab5eB14c09D416F0aC63661E57EDB7AEcDb9BEfA",
+      msETH: "0x526728DBc96689597F85ae4cd716d4f7fCcBAE9d",
+    },
+    Vesper: {
+      KEEPER: "0x3ED788455Ec4CD272c578f7218bc5c5a8DB3B9B6", // Strategy keeper contract
+      vamsETH: "0x913Ece180df83A2B81A4976F83cA88543a0C51b8",
+      vaETH: "0x82562507429876486B60AF4F32390ef0947b3d13",
+      vaUSDC: "0x1e41238aCd3A9fF90b0DCB9ea96Cf45F104e09Ef",
+      vacbETH: "0x3899a6090c5C178dB8A1800DA39daD0D06EeEFBE",
+      vawstETH: "0x46fb68Eb2b1Fc43654AbaE5691D39D18D933E4b4",
+    },
+  },
+};
+
+const chains = {
+  1: "mainnet",
+  31337: "mainnet",
+  10: "optimism",
+  8453: "base",
+};
+
+const getChain = (): string => {
+  const { chainId } = hre.network.config;
+
+  const chain = chains[chainId!];
+
+  if (!chain) {
+    throw Error(`No address setup for chainId ${chainId}`);
+  }
+
+  return chain;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const Address = (A as { [key: string]: any })[getChain()];
+
+export default A;

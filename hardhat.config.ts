@@ -4,6 +4,7 @@ import "@openzeppelin/hardhat-upgrades";
 import "hardhat-deploy";
 import "hardhat-deploy-ethers";
 import "dotenv/config";
+import "./tasks/impersonate";
 
 const localhost = process.env.FORK_NODE_URL || "http://localhost:8545";
 const mainnetNodeUrl = process.env.MAINNET_NODE_URL || "";

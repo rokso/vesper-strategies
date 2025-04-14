@@ -7,3 +7,4 @@ export const AAVE_V3_VESPER_BORROW_FOR_STETH = "AaveV3VesperBorrowForStETH";
 export const COMPOUND_V3 = "CompoundV3";
 export const COMPOUND_V3_BORROW = "CompoundV3Borrow";
 export const COMPOUND_V3_VESPER_BORROW = "CompoundV3VesperBorrow";
+export const EULER_V2 = "EulerV2";

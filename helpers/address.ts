@@ -83,6 +83,7 @@ const A = {
     USDC: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
     cbETH: "0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22",
     wstETH: "0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452",
+    EXTRA: "0x2dAD3a13ef0C6366220f989157009e501e7938F8",
     swapper: "0xd7c751fA32590451548B100C4f6442F062C9bc8E",
     masterOracle: "0x99866a6074ADb027f09c9AF31929dB5941D36DA7",
     MORPHO: "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb",
@@ -93,6 +94,9 @@ const A = {
     },
     Compound: {
       V3: { rewards: "0x123964802e6ABabBE1Bc9547D72Ef1B69B00A6b1" },
+    },
+    ExtraFinance: {
+      LendingPool: "0xBB505c54D71E9e599cB8435b4F0cEEc05fC71cbD",
     },
     Synth: {
       msUSD: "0xab5eB14c09D416F0aC63661E57EDB7AEcDb9BEfA",

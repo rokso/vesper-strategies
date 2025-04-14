@@ -42,6 +42,10 @@ const A = {
         MetronomeMsUSD: "0x6859B34a9379122d25A9FA46f0882d434fee36c3",
       },
     },
+    Sommelier: {
+      YieldETH: "0xb5b29320d2Dde5BA5BAFA1EbcD270052070483ec",
+      YieldUSD: "0x97e6E0a40a3D02F12d1cEC30ebfbAE04e37C119E",
+    },
     Vesper: {
       KEEPER: "0xf7364E230EA0e5CC41E6Cd4E2a30A26Ca1850b73", // Strategy keeper contract address
       vaUSDC: "0xa8b607Aa09B6A2E306F93e74c282Fb13f6A80452",

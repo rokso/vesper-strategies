@@ -36,6 +36,12 @@ const A = {
     EulerV2: {
       eUSDC2: "0x797DD80692c3b2dAdabCe8e30C07fDE5307D48a9",
     },
+    Morpho: {
+      vault: {
+        MetronomeMsETH: "0x78B18E07dc43017fcEaabaD0751d6464c0F56b25",
+        MetronomeMsUSD: "0x6859B34a9379122d25A9FA46f0882d434fee36c3",
+      },
+    },
     Vesper: {
       KEEPER: "0xf7364E230EA0e5CC41E6Cd4E2a30A26Ca1850b73", // Strategy keeper contract address
       vaUSDC: "0xa8b607Aa09B6A2E306F93e74c282Fb13f6A80452",

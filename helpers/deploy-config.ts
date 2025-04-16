@@ -14,3 +14,4 @@ export const EXTRA_FINANCE = "ExtraFinance";
 export const MORPHO_VAULT = "MorphoVault";
 export const SOMMELIER = "Sommelier";
 export const STARGATE_V2 = "StargateV2";
+export const YEARN = "Yearn";

@@ -18,6 +18,7 @@ const A = {
     MORPHO: "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb",
     COMP: "0xc00e94Cb662C3520282E6f5717214004A7f26888",
     AAVE: "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9",
+    STG: "0xAf5191B0De278C7286d6C7CC6ab6BB8A73bA2Cd6",
     Aave: {
       stkAave: "0x4da27a545c0c5B758a6BA100e3a049001de870f5",
       V3: {
@@ -45,6 +46,13 @@ const A = {
     Sommelier: {
       YieldETH: "0xb5b29320d2Dde5BA5BAFA1EbcD270052070483ec",
       YieldUSD: "0x97e6E0a40a3D02F12d1cEC30ebfbAE04e37C119E",
+    },
+    Stargate: {
+      V2: {
+        stargateStaking: "0xFF551fEDdbeDC0AeE764139cCD9Cb644Bb04A6BD",
+        usdcPool: "0xc026395860Db2d07ee33e05fE50ed7bD583189C7",
+        ethPool: "0x77b2043768d28E9C9aB44E1aBfC95944bcE57931",
+      },
     },
     Vesper: {
       KEEPER: "0xf7364E230EA0e5CC41E6Cd4E2a30A26Ca1850b73", // Strategy keeper contract address

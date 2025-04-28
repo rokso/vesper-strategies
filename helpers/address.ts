@@ -19,6 +19,7 @@ const A = {
     COMP: "0xc00e94Cb662C3520282E6f5717214004A7f26888",
     AAVE: "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9",
     STG: "0xAf5191B0De278C7286d6C7CC6ab6BB8A73bA2Cd6",
+    FRAX: "0x853d955aCEf822Db058eb8505911ED77F175b99e",
     Aave: {
       stkAave: "0x4da27a545c0c5B758a6BA100e3a049001de870f5",
       V3: {
@@ -36,6 +37,12 @@ const A = {
     },
     EulerV2: {
       eUSDC2: "0x797DD80692c3b2dAdabCe8e30C07fDE5307D48a9",
+    },
+    Fraxlend: {
+      V1: {
+        WBTC_FRAX: "0x32467a5fc2d72D21E8DCe990906547A2b012f382",
+        sfrxETH_FRAX: "0x78bB3aEC3d855431bd9289fD98dA13F9ebB7ef15",
+      },
     },
     Morpho: {
       vault: {

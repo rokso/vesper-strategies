@@ -1,6 +1,4 @@
-export const CREATE3_SALT_PREFIX = "finance.vesper";
-
-// Strategies
+// Strategy contract names
 export const AAVE_V3 = "AaveV3";
 export const AAVE_V3_VESPER_BORROW = "AaveV3VesperBorrow";
 export const AAVE_V3_VESPER_BORROW_FOR_STETH = "AaveV3VesperBorrowForStETH";
@@ -11,6 +9,8 @@ export const COMPOUND_V3_BORROW = "CompoundV3Borrow";
 export const COMPOUND_V3_VESPER_BORROW = "CompoundV3VesperBorrow";
 export const EULER_V2 = "EulerV2";
 export const EXTRA_FINANCE = "ExtraFinance";
+export const FRAXLEND_V1 = "FraxlendV1";
+export const FRAXLEND_V1_VESPER_BORROW = "FraxlendV1VesperBorrow";
 export const MORPHO_VAULT = "MorphoVault";
 export const SOMMELIER = "Sommelier";
 export const STARGATE_V2 = "StargateV2";

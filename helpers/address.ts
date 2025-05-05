@@ -20,6 +20,7 @@ const A = {
     AAVE: "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9",
     STG: "0xAf5191B0De278C7286d6C7CC6ab6BB8A73bA2Cd6",
     FRAX: "0x853d955aCEf822Db058eb8505911ED77F175b99e",
+    CRV: "0xD533a949740bb3306d119CC777fa900bA034cd52",
     Aave: {
       stkAave: "0x4da27a545c0c5B758a6BA100e3a049001de870f5",
       V3: {
@@ -34,6 +35,11 @@ const A = {
         cUSDCv3: "0xc3d688B66703497DAA19211EEdff47f25384cdc3",
         rewards: "0x1B0e765F6224C21223AeA2af16c1C46E38885a40",
       },
+    },
+    Curve: {
+      Compound_Pool: "0xA2B47E3D5c44877cca798226B7B8118F9BFb7A56",
+      Compound_Pool_Zap: "0xeB21209ae4C2c9FF2a86ACA31E123764A3B6Bc06",
+      DepositAndStake: "0x56C526b0159a258887e0d79ec3a80dfb940d0cD7",
     },
     EulerV2: {
       eUSDC2: "0x797DD80692c3b2dAdabCe8e30C07fDE5307D48a9",

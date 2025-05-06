@@ -1,0 +1,46 @@
+{
+  "name": "vesper-strategies-2",
+  "version": "5.2.0",
+  "description": "Strategies for Vesper pools",
+  "license": "MIT",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "solhint": "solhint './contracts/**/*.sol'",
+    "solhint:fix": "prettier --write 'contracts/**/*.sol'",
+    "eslint": "eslint --cache .",
+    "hardhat": "hardhat",
+    "clean": "hardhat clean",
+    "compile": "hardhat compile",
+    "build": "npm run clean && npm run compile",
+    "coverage": "hardhat coverage",
+    "deploy": "hardhat deploy",
+    "fork": "hardhat node --no-deploy",
+    "test": "hardhat test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.23.0",
+    "@nomicfoundation/hardhat-toolbox": "5.0.0",
+    "@openzeppelin/contracts": "5.2.0",
+    "@openzeppelin/contracts-upgradeable": "5.2.0",
+    "@openzeppelin/hardhat-upgrades": "3.9.0",
+    "@safe-global/api-kit": "^3.0.1",
+    "@safe-global/protocol-kit": "^6.0.3",
+    "@safe-global/types-kit": "^2.0.1",
+    "@typescript-eslint/eslint-plugin": "^8.29.0",
+    "dotenv": "^16.5.0",
+    "eslint": "^9.23.0",
+    "eslint-config-prettier": "^10.1.1",
+    "eslint-plugin-prettier": "^5.2.6",
+    "globals": "^16.0.0",
+    "hardhat": "2.22.19",
+    "hardhat-deploy": "0.12.4",
+    "hardhat-deploy-ethers": "^0.4.2",
+    "prettier": "^3.5.3",
+    "solc": "0.8.25",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.29.0"
+  }
+}

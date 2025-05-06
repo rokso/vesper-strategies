@@ -18,6 +18,7 @@ const A = {
     MORPHO: "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb",
     COMP: "0xc00e94Cb662C3520282E6f5717214004A7f26888",
     AAVE: "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9",
+    STG: "0xAf5191B0De278C7286d6C7CC6ab6BB8A73bA2Cd6",
     Aave: {
       stkAave: "0x4da27a545c0c5B758a6BA100e3a049001de870f5",
       V3: {
@@ -33,6 +34,26 @@ const A = {
         rewards: "0x1B0e765F6224C21223AeA2af16c1C46E38885a40",
       },
     },
+    EulerV2: {
+      eUSDC2: "0x797DD80692c3b2dAdabCe8e30C07fDE5307D48a9",
+    },
+    Morpho: {
+      vault: {
+        MetronomeMsETH: "0x78B18E07dc43017fcEaabaD0751d6464c0F56b25",
+        MetronomeMsUSD: "0x6859B34a9379122d25A9FA46f0882d434fee36c3",
+      },
+    },
+    Sommelier: {
+      YieldETH: "0xb5b29320d2Dde5BA5BAFA1EbcD270052070483ec",
+      YieldUSD: "0x97e6E0a40a3D02F12d1cEC30ebfbAE04e37C119E",
+    },
+    Stargate: {
+      V2: {
+        stargateStaking: "0xFF551fEDdbeDC0AeE764139cCD9Cb644Bb04A6BD",
+        usdcPool: "0xc026395860Db2d07ee33e05fE50ed7bD583189C7",
+        ethPool: "0x77b2043768d28E9C9aB44E1aBfC95944bcE57931",
+      },
+    },
     Vesper: {
       KEEPER: "0xf7364E230EA0e5CC41E6Cd4E2a30A26Ca1850b73", // Strategy keeper contract address
       vaUSDC: "0xa8b607Aa09B6A2E306F93e74c282Fb13f6A80452",
@@ -46,6 +67,11 @@ const A = {
       vacbETH: "0x650CD45DEdb19c33160Acc522aD1a82D9701036a",
       vamsUSD: "0x4C73F025a1947ec770327B9956Fc61f535F72C22",
       vamsETH: "0xCa7c607C590ad16007CCBbba9D26f4df656a36C2",
+    },
+    Yearn: {
+      yvDAI: "0xdA816459F1AB5631232FE5e97a05BBBb94970c95",
+      yvUSDC: "0x5f18C75AbDAe578b483E5F43f12a39cF75b973a9",
+      yvWETH: "0xa258C4606Ca8206D8aA700cE2143D7db854D168c",
     },
   },
   optimism: {
@@ -80,6 +106,7 @@ const A = {
     USDC: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
     cbETH: "0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22",
     wstETH: "0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452",
+    EXTRA: "0x2dAD3a13ef0C6366220f989157009e501e7938F8",
     swapper: "0xd7c751fA32590451548B100C4f6442F062C9bc8E",
     masterOracle: "0x99866a6074ADb027f09c9AF31929dB5941D36DA7",
     MORPHO: "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb",
@@ -90,6 +117,9 @@ const A = {
     },
     Compound: {
       V3: { rewards: "0x123964802e6ABabBE1Bc9547D72Ef1B69B00A6b1" },
+    },
+    ExtraFinance: {
+      LendingPool: "0xBB505c54D71E9e599cB8435b4F0cEEc05fC71cbD",
     },
     Synth: {
       msUSD: "0xab5eB14c09D416F0aC63661E57EDB7AEcDb9BEfA",

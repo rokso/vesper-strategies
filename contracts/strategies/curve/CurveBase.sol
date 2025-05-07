@@ -31,6 +31,7 @@ abstract contract CurveBase is Strategy {
 
     event SlippageUpdated(uint256 oldSlippage, uint256 newSlippage);
     event MasterOracleUpdated(IMasterOracle oldMasterOracle, IMasterOracle newMasterOracle);
+    event WithdrawOneCoinToggled(bool newValue);
 
     ITokenMinter public constant CRV_MINTER = ITokenMinter(0xd061D61a4d941c39E5453435B6345Dc261C2fcE0); // This contract only exists on mainnet
     ILiquidityGaugeFactory public constant GAUGE_FACTORY =
@@ -68,11 +69,13 @@ abstract contract CurveBase is Strategy {
         address _depositContract;
         address _curvePoolForDeposit;
         uint256 _slippage;
+        uint256 _collateralIdx;
         address[] _underlyingTokens;
         address[] _rewardTokens;
         bool _isMetaPool;
         bool _useDynamicArray;
         bool _useUnderlying;
+        bool _withdrawOneCoin;
     }
 
     bytes32 private constant CurveBaseStorageLocation =
@@ -108,7 +111,7 @@ abstract contract CurveBase is Strategy {
 
         CurveBaseStorage storage $ = _getCurveBaseStorage();
         bool _isLendingTokenPool;
-        ($._underlyingTokens, $._isMetaPool, _isLendingTokenPool) = _getCurvePoolInfo(
+        ($._underlyingTokens, $._collateralIdx, $._isMetaPool, _isLendingTokenPool) = _getCurvePoolInfo(
             _registry,
             params_.curvePool,
             params_.weth
@@ -207,6 +210,10 @@ abstract contract CurveBase is Strategy {
 
     function masterOracle() public view returns (IMasterOracle) {
         return _getCurveBaseStorage()._masterOracle;
+    }
+
+    function withdrawOneCoin() public view returns (bool) {
+        return _getCurveBaseStorage()._withdrawOneCoin;
     }
 
     function receiptToken() public view override returns (address) {
@@ -319,7 +326,11 @@ abstract contract CurveBase is Strategy {
         IMetaRegistry registry_,
         address curvePool_,
         address _weth
-    ) internal view returns (address[] memory _underlyingTokens, bool _isMetaPool, bool _isLendingTokenPool) {
+    )
+        internal
+        view
+        returns (address[] memory _underlyingTokens, uint256 _collateralIdx, bool _isMetaPool, bool _isLendingTokenPool)
+    {
         /// Note: collateralToken() is defined in parent contract and must be initialized before reading it.
         address _collateralToken = address(collateralToken());
         // This is the actual number of underlying tokens in Curve pool
@@ -328,7 +339,7 @@ abstract contract CurveBase is Strategy {
         _underlyingTokens = new address[](_nCoins);
         // get_underlying_coins always returns array of 8 length
         address[8] memory _underlyingCoins = registry_.get_underlying_coins(curvePool_);
-        uint256 _collateralIdx = type(uint256).max;
+        _collateralIdx = type(uint256).max;
         for (uint256 i; i < _nCoins; i++) {
             _underlyingTokens[i] = _underlyingCoins[i];
             if (_underlyingCoins[i] == _collateralToken || (_underlyingCoins[i] == ETH && _collateralToken == _weth)) {
@@ -491,6 +502,10 @@ abstract contract CurveBase is Strategy {
         CurveBaseStorage memory s = _getCurveBaseStorage();
         address _curvePool = s._curvePool;
         address _curvePoolZap = s._curvePoolZap;
+        if (s._withdrawOneCoin) {
+            _withdrawOneCoin(s, lpToBurn_);
+            return;
+        }
         if (s._useDynamicArray) {
             uint256[] memory _amountOut = new uint256[](nCoins_);
             IWithdraw(_curvePool).remove_liquidity(lpToBurn_, _amountOut);
@@ -555,6 +570,19 @@ abstract contract CurveBase is Strategy {
             revert SlippageTooHigh();
     }
 
+    function _withdrawOneCoin(CurveBaseStorage memory s, uint256 lpToBurn_) internal {
+        // Withdraw is protected by collateral balance check at the end, so it if fine to use 1 as min out.
+        uint256 _minOut = 1;
+        int128 _i = int128(int256(s._collateralIdx));
+        if (s._curvePoolZap != address(0)) {
+            IWithdraw(s._curvePoolZap).remove_liquidity_one_coin(s._curvePool, lpToBurn_, _i, _minOut);
+        } else if (s._useUnderlying) {
+            IWithdraw(s._curvePool).remove_liquidity_one_coin(lpToBurn_, _i, _minOut, true);
+        } else {
+            IWithdraw(s._curvePool).remove_liquidity_one_coin(lpToBurn_, _i, _minOut);
+        }
+    }
+
     /************************************************************************************************
      *                          Governor/admin/keeper function                                      *
      ***********************************************************************************************/
@@ -570,6 +598,13 @@ abstract contract CurveBase is Strategy {
         _getCurveBaseStorage()._rewardTokens = _getRewardTokens();
         // 3. Approve tokens. If needed, forceApprove will set approval to zero before setting new value.
         _approveToken(MAX_UINT_VALUE);
+    }
+
+    function toggleWithdrawOneCoinFlag() external onlyKeeper {
+        CurveBaseStorage storage $ = _getCurveBaseStorage();
+        bool _newValue = !$._withdrawOneCoin;
+        emit WithdrawOneCoinToggled(_newValue);
+        $._withdrawOneCoin = _newValue;
     }
 
     function updateSlippage(uint256 newSlippage_) external onlyGovernor {

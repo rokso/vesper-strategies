@@ -31,6 +31,20 @@ interface IDepositAndStake {
 }
 
 interface IWithdraw {
+    // Remove liquidity one coin
+    function remove_liquidity_one_coin(uint256 _token_amount, int128 i, uint256 _min_amount) external;
+
+    function remove_liquidity_one_coin(
+        uint256 _token_amount,
+        int128 i,
+        uint256 _min_amount,
+        bool _use_underlying
+    ) external;
+
+    function remove_liquidity_one_coin(address _pool, uint256 _burn_amount, int128 i, uint256 _min_amount) external;
+
+    // Remove liquidity in all tokens
+    // For plain Curve pools
     function remove_liquidity(uint256 _amount, uint256[2] memory _min_amounts) external;
 
     function remove_liquidity(uint256 _amount, uint256[3] memory _min_amounts) external;

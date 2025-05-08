@@ -36,10 +36,14 @@ const A = {
         rewards: "0x1B0e765F6224C21223AeA2af16c1C46E38885a40",
       },
     },
+    Convex: {
+      booster: "0xF403C135812408BFbE8713b5A23a04b3D48AAE31",
+    },
     Curve: {
       Compound_Pool: "0xA2B47E3D5c44877cca798226B7B8118F9BFb7A56",
       Compound_Pool_Zap: "0xeB21209ae4C2c9FF2a86ACA31E123764A3B6Bc06",
       DepositAndStake: "0x56C526b0159a258887e0d79ec3a80dfb940d0cD7",
+      eUSD_USDC_POOL: "0x08BfA22bB3e024CDfEB3eca53c0cb93bF59c4147",
     },
     EulerV2: {
       eUSDC2: "0x797DD80692c3b2dAdabCe8e30C07fDE5307D48a9",

@@ -277,8 +277,12 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
         _amountOut = swapper().swapExactInput(tokenIn_, tokenOut_, amountIn_, 1, address(this));
     }
 
-    function _safeSwapExactInput(address tokenIn_, address tokenOut_, uint256 amountIn_) internal {
-        try swapper().swapExactInput(tokenIn_, tokenOut_, amountIn_, 1, address(this)) {} catch {}
+    function _trySwapExactInput(address tokenIn_, address tokenOut_, uint256 amountIn_) internal returns (uint256) {
+        try swapper().swapExactInput(tokenIn_, tokenOut_, amountIn_, 1, address(this)) returns (uint256 _amountOut) {
+            return _amountOut;
+        } catch {
+            return 0;
+        }
     }
 
     // These methods must be implemented by the inheriting strategy

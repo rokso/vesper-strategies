@@ -245,7 +245,7 @@ abstract contract CompoundV3Borrow is Strategy {
                     _yTokensHere = IERC20(_borrowToken).balanceOf(address(this));
                 }
                 if (_yTokensHere > 0) {
-                    _safeSwapExactInput(_borrowToken, address(_collateralToken), _yTokensHere);
+                    _trySwapExactInput(_borrowToken, address(_collateralToken), _yTokensHere);
                 }
             }
         }
@@ -372,9 +372,10 @@ abstract contract CompoundV3Borrow is Strategy {
                 ? amountToRecover_
                 : _extraBorrowBalance;
             // Do swap and transfer
-            uint256 _collateralBefore = _collateralToken.balanceOf(address(this));
-            _safeSwapExactInput(_borrowToken, address(_collateralToken), _recoveryAmount);
-            _collateralToken.safeTransfer(pool(), _collateralToken.balanceOf(address(this)) - _collateralBefore);
+            uint256 _amountOut = _trySwapExactInput(_borrowToken, address(_collateralToken), _recoveryAmount);
+            if (_amountOut > 0) {
+                _collateralToken.safeTransfer(pool(), _amountOut);
+            }
         }
     }
 

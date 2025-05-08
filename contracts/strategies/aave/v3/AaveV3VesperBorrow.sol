@@ -6,7 +6,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IVesperPool} from "../../../interfaces/vesper/IVesperPool.sol";
-import {VesperRewards} from "../../VesperRewards.sol";
 import {AaveV3Borrow} from "./AaveV3Borrow.sol";
 
 /// @title Deposit Collateral in Aave and earn interest by depositing borrowed token in a Vesper Pool.
@@ -59,19 +58,11 @@ contract AaveV3VesperBorrow is AaveV3Borrow {
         super._approveToken(amount_);
         IVesperPool _vPool = vPool();
         IERC20(borrowToken()).forceApprove(address(_vPool), amount_);
-        VesperRewards._approveToken(_vPool, swapper(), amount_);
     }
 
     /// @notice Before repaying Y, withdraw it from Vesper Pool
     function _beforeRepayY(uint256 amount_) internal virtual override {
         _withdrawY(amount_);
-    }
-
-    /// @dev Claim all rewards and convert to collateral.
-    function _claimAndSwapRewards() internal override {
-        // Claim rewards from Aave
-        AaveV3Borrow._claimAndSwapRewards();
-        VesperRewards._claimAndSwapRewards(vPool(), swapper(), address(wrappedCollateral()));
     }
 
     /// @dev borrowToken balance here + borrowToken balance deposited in Vesper Pool

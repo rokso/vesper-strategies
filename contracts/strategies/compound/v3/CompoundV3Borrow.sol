@@ -10,7 +10,6 @@ import {Strategy} from "../../Strategy.sol";
 import {IVesperPool} from "../../../interfaces/vesper/IVesperPool.sol";
 import {ISwapper} from "../../../interfaces/swapper/ISwapper.sol";
 import {IComet} from "../../../interfaces/compound/IComet.sol";
-import {IRewards} from "../../../interfaces/compound/IRewards.sol";
 
 // solhint-disable no-empty-blocks
 
@@ -35,8 +34,6 @@ abstract contract CompoundV3Borrow is Strategy {
     /// @custom:storage-location erc7201:vesper.storage.Strategy.CompoundV3Borrow
     struct CompoundV3BorrowStorage {
         IComet _comet;
-        IRewards _compRewards;
-        address _rewardToken;
         address _borrowToken;
         uint256 _minBorrowLimit;
         uint256 _maxBorrowLimit;
@@ -56,24 +53,15 @@ abstract contract CompoundV3Borrow is Strategy {
     function __CompoundV3Borrow_init(
         address pool_,
         address swapper_,
-        address compRewards_,
-        address rewardToken_,
         address comet_,
         address borrowToken_,
         string memory name_
     ) internal initializer {
         __Strategy_init(pool_, swapper_, comet_, name_);
-        if (
-            comet_ == address(0) ||
-            compRewards_ == address(0) ||
-            rewardToken_ == address(0) ||
-            borrowToken_ == address(0)
-        ) revert AddressIsNull();
+        if (borrowToken_ == address(0)) revert AddressIsNull();
 
         CompoundV3BorrowStorage storage $ = _getCompoundV3BorrowStorage();
         $._comet = IComet(comet_);
-        $._compRewards = IRewards(compRewards_);
-        $._rewardToken = rewardToken_;
         $._borrowToken = borrowToken_;
         $._minBorrowLimit = 7_000; // 70% of actual collateral factor of protocol
         $._maxBorrowLimit = 8_500; // 85% of actual collateral factor of protocol
@@ -87,10 +75,6 @@ abstract contract CompoundV3Borrow is Strategy {
         return _getCompoundV3BorrowStorage()._comet;
     }
 
-    function compRewards() public view returns (IRewards) {
-        return _getCompoundV3BorrowStorage()._compRewards;
-    }
-
     function isReservedToken(address token_) public view virtual override returns (bool) {
         return token_ == address(comet()) || token_ == address(collateralToken()) || token_ == borrowToken();
     }
@@ -101,10 +85,6 @@ abstract contract CompoundV3Borrow is Strategy {
 
     function minBorrowLimit() public view returns (uint256) {
         return _getCompoundV3BorrowStorage()._minBorrowLimit;
-    }
-
-    function rewardToken() public view returns (address) {
-        return _getCompoundV3BorrowStorage()._rewardToken;
     }
 
     /// @notice Returns total collateral locked in the strategy
@@ -129,7 +109,6 @@ abstract contract CompoundV3Borrow is Strategy {
         _collateralToken.forceApprove(_swapper, amount_);
         _borrowToken.forceApprove(_comet, amount_);
         _borrowToken.forceApprove(_swapper, amount_);
-        IERC20(rewardToken()).forceApprove(_swapper, amount_);
     }
 
     /// @dev Borrow Y from Compound. _afterBorrowY hook can be used to do anything with borrowed amount.
@@ -209,21 +188,6 @@ abstract contract CompoundV3Borrow is Strategy {
         }
     }
 
-    /// @dev Claim COMP and convert COMP into given token.
-    /// Overriding _claimAndSwapRewards will help child contract otherwise override _claimReward.
-    function _claimAndSwapRewards() internal virtual override {
-        CompoundV3BorrowStorage storage s = _getCompoundV3BorrowStorage();
-        IComet _comet = s._comet;
-        IRewards _compRewards = s._compRewards;
-        address _rewardToken = address(s._rewardToken);
-
-        _compRewards.claim(address(_comet), address(this), true);
-        uint256 _rewardAmount = IERC20(_rewardToken).balanceOf(address(this));
-        if (_rewardAmount > 0) {
-            _safeSwapExactInput(_rewardToken, address(collateralToken()), _rewardAmount);
-        }
-    }
-
     /// @dev Deposit collateral in Compound V3 and adjust borrow position
     function _deposit() internal {
         IERC20 _collateralToken = collateralToken();
@@ -231,7 +195,7 @@ abstract contract CompoundV3Borrow is Strategy {
         (uint256 _borrowAmount, uint256 _repayAmount) = _calculateBorrowPosition(_collateralBalance, 0);
         if (_repayAmount > 0) {
             // Repay to maintain safe position
-            _repay(_repayAmount, false);
+            _repay(_repayAmount);
             _mintX(_collateralToken.balanceOf(address(this)));
         } else {
             // Happy path, mint more borrow more
@@ -314,22 +278,16 @@ abstract contract CompoundV3Borrow is Strategy {
 
     /**
      * @dev Repay borrow amount
-     * @dev Claim rewardToken and convert to collateral. Swap collateral to borrowToken as needed.
+     * @dev Swap collateral to borrowToken as needed.
      * @param repayAmount_ BorrowToken amount that we should repay to maintain safe position.
-     * @param shouldClaimComp_ Flag indicating should we claim rewardToken and convert to collateral or not.
      */
-    function _repay(uint256 repayAmount_, bool shouldClaimComp_) internal {
+    function _repay(uint256 repayAmount_) internal {
         if (repayAmount_ > 0) {
             uint256 _totalYTokens = IERC20(borrowToken()).balanceOf(address(this)) + _getYTokensInProtocol();
             // Liability is more than what we have.
             // To repay loan - convert all rewards to collateral, if asked, and redeem collateral(if needed).
             // This scenario is rare and if system works okay it will/might happen during final repay only.
             if (repayAmount_ > _totalYTokens) {
-                if (shouldClaimComp_) {
-                    // Claim rewardToken and convert those to collateral.
-                    _claimAndSwapRewards();
-                }
-
                 uint256 _yTokensBorrowed = comet().borrowBalanceOf(address(this));
                 // For example this is final repay and 100 blocks has passed since last withdraw/rebalance,
                 // _yTokensBorrowed is increasing due to interest. Now if _repayAmount > _borrowBalanceHere is true
@@ -376,7 +334,7 @@ abstract contract CompoundV3Borrow is Strategy {
     /// @dev Withdraw collateral here. Do not transfer to pool
     function _withdrawHere(uint256 amount_) internal override {
         (, uint256 _repayAmount) = _calculateBorrowPosition(0, amount_);
-        _repay(_repayAmount, true);
+        _repay(_repayAmount);
         IComet _comet = comet();
         address _collateralToken = address(collateralToken());
         // Get minimum of amount_ and collateral supplied and _availableLiquidity of collateral
@@ -427,7 +385,7 @@ abstract contract CompoundV3Borrow is Strategy {
      */
     function repayAll() external onlyKeeper {
         CompoundV3BorrowStorage storage $ = _getCompoundV3BorrowStorage();
-        _repay($._comet.borrowBalanceOf(address(this)), true);
+        _repay($._comet.borrowBalanceOf(address(this)));
         $._minBorrowLimit = 0;
         $._maxBorrowLimit = 0;
     }

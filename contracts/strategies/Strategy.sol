@@ -142,25 +142,22 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
     }
 
     /**
-     * @notice Add given address in keepers list.
+     * @notice onlyGovernor: Add given address in keepers list.
      * @param keeperAddress_ keeper address to add.
      */
     function addKeeper(address keeperAddress_) external onlyGovernor {
         _getStrategyStorage()._keepers.add(keeperAddress_);
     }
 
-    /// @dev Approve all required tokens
+    /// @dev OnlyKeeper: Approve all required tokens
     function approveToken(uint256 approvalAmount_) external onlyKeeper {
         _approveToken(approvalAmount_);
     }
 
-    /// @notice Claim rewardToken and convert rewardToken into collateral token.
-    function claimAndSwapRewards(uint256 minAmountOut_) external onlyKeeper returns (uint256 _amountOut) {
-        IERC20 _collateralToken = collateralToken();
-        uint256 _collateralBefore = _collateralToken.balanceOf(address(this));
-        _claimAndSwapRewards();
-        _amountOut = _collateralToken.balanceOf(address(this)) - _collateralBefore;
-        if (_amountOut < minAmountOut_) revert NotEnoughAmountOut();
+    /// @notice OnlyKeeper: Claim rewards from protocol.
+    /// @dev This function will only be used when protocol doesn't offer claim by anyone.
+    function claimRewards() external onlyKeeper {
+        _claimRewards();
     }
 
     /**
@@ -176,7 +173,7 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
     }
 
     /**
-     * @notice Remove given address from keepers list.
+     * @notice onlyGovernor: Remove given address from keepers list.
      * @param keeperAddress_ keeper address to remove.
      */
     function removeKeeper(address keeperAddress_) external onlyGovernor {
@@ -205,7 +202,7 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
     }
 
     /**
-     * @notice sweep given token to feeCollector of strategy
+     * @notice onlyKeeper: sweep given token to feeCollector of strategy
      * @param fromToken_ token address to sweep
      */
     function sweep(address fromToken_) external override onlyKeeper {
@@ -221,7 +218,7 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
     }
 
     /**
-     * @notice Update fee collector
+     * @notice onlyGovernor: Update fee collector
      * @param feeCollector_ fee collector address
      */
     function updateFeeCollector(address feeCollector_) external onlyGovernor {
@@ -232,7 +229,7 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
     }
 
     /**
-     * @notice Update swapper
+     * @notice onlyGovernor: Update swapper
      * @param swapper_ swapper address
      */
     function updateSwapper(ISwapper swapper_) external onlyGovernor {
@@ -243,7 +240,7 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
     }
 
     /**
-     * @notice Withdraw collateral token from end protocol.
+     * @notice onlyPool: Withdraw collateral token from end protocol.
      * @param amount_ Amount of collateral token
      */
     function withdraw(uint256 amount_) external override onlyPool {
@@ -268,14 +265,7 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
 
     function _authorizeUpgrade(address newImplementation) internal override onlyGovernor {}
 
-    function _claimAndSwapRewards() internal virtual {
-        (address _rewardToken, uint256 _rewardsAmount) = _claimRewards();
-        if (_rewardsAmount > 0) {
-            _safeSwapExactInput(_rewardToken, address(collateralToken()), _rewardsAmount);
-        }
-    }
-
-    function _claimRewards() internal virtual returns (address, uint256) {}
+    function _claimRewards() internal virtual {}
 
     function _rebalance() internal virtual returns (uint256 _profit, uint256 _loss, uint256 _payback);
 

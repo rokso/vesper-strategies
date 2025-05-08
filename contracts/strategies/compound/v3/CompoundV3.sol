@@ -8,60 +8,21 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {Strategy} from "../../Strategy.sol";
 import {IVesperPool} from "../../../interfaces/vesper/IVesperPool.sol";
 import {IComet} from "../../../interfaces/compound/IComet.sol";
-import {IRewards} from "../../../interfaces/compound/IRewards.sol";
 
 /// @title This strategy will deposit base asset i.e. USDC in Compound V3 and earn interest.
 contract CompoundV3 is Strategy {
     using SafeERC20 for IERC20;
 
-    /// @custom:storage-location erc7201:vesper.storage.Strategy.CompoundV3
-    struct CompoundV3Storage {
-        IComet _comet;
-        IRewards _compRewards;
-        address _rewardToken;
-    }
-
-    bytes32 private constant CompoundV3StorageLocation =
-        keccak256(abi.encode(uint256(keccak256("vesper.storage.Strategy.CompoundV3")) - 1)) & ~bytes32(uint256(0xff));
-
-    function _getCompoundV3Storage() internal pure returns (CompoundV3Storage storage $) {
-        bytes32 _location = CompoundV3StorageLocation;
-        assembly {
-            $.slot := _location
-        }
-    }
-
-    function initialize(
-        address pool_,
-        address swapper_,
-        address compRewards_,
-        address rewardToken_,
-        address comet_,
-        string memory name_
-    ) external initializer {
+    function initialize(address pool_, address swapper_, address comet_, string memory name_) external initializer {
         __Strategy_init(pool_, swapper_, comet_, name_);
-
-        if (comet_ == address(0) || compRewards_ == address(0) || rewardToken_ == address(0)) revert AddressIsNull();
-        CompoundV3Storage storage s = _getCompoundV3Storage();
-        s._comet = IComet(comet_);
-        s._compRewards = IRewards(compRewards_);
-        s._rewardToken = rewardToken_;
     }
 
     function comet() public view returns (IComet) {
-        return _getCompoundV3Storage()._comet;
-    }
-
-    function compRewards() public view returns (IRewards) {
-        return _getCompoundV3Storage()._compRewards;
+        return IComet(receiptToken());
     }
 
     function isReservedToken(address token_) public view virtual override returns (bool) {
         return token_ == address(comet());
-    }
-
-    function rewardToken() public view returns (address) {
-        return _getCompoundV3Storage()._rewardToken;
     }
 
     function tvl() external view override returns (uint256) {
@@ -72,18 +33,6 @@ contract CompoundV3 is Strategy {
     function _approveToken(uint256 amount_) internal virtual override {
         super._approveToken(amount_);
         collateralToken().forceApprove(address(comet()), amount_);
-        IERC20(rewardToken()).forceApprove(address(swapper()), amount_);
-    }
-
-    /// @dev Claim COMP
-    function _claimRewards() internal override returns (address, uint256) {
-        CompoundV3Storage storage s = _getCompoundV3Storage();
-        IComet _comet = s._comet;
-        IRewards _compRewards = s._compRewards;
-        address _rewardToken = address(s._rewardToken);
-
-        _compRewards.claim(address(_comet), address(this), true);
-        return (_rewardToken, IERC20(_rewardToken).balanceOf(address(this)));
     }
 
     /**

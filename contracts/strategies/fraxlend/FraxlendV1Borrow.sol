@@ -7,7 +7,6 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {Strategy} from "../Strategy.sol";
-import {VesperRewards} from "../VesperRewards.sol";
 import {AggregatorV3Interface} from "../../interfaces/chainlink/AggregatorV3Interface.sol";
 import {IVesperPool} from "../../interfaces/vesper/IVesperPool.sol";
 import {IFraxlendPair} from "../../interfaces/fraxlend/IFraxlendPair.sol";

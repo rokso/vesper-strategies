@@ -71,24 +71,11 @@ contract AaveV3 is Strategy {
     function _approveToken(uint256 amount_) internal override {
         super._approveToken(amount_);
         collateralToken().forceApprove(address(aavePoolAddressesProvider().getPool()), amount_);
-        try IAToken(receiptToken()).getIncentivesController() returns (IIncentivesController _incentivesController) {
-            address[] memory _rewardTokens = _incentivesController.getRewardsList();
-            for (uint256 i; i < _rewardTokens.length; ++i) {
-                IERC20(_rewardTokens[i]).forceApprove(address(swapper()), amount_);
-            }
-            //solhint-disable-next-line no-empty-blocks
-        } catch {}
     }
 
-    /// @dev Claim all rewards and convert to collateral.
-    function _claimAndSwapRewards() internal override {
-        (address[] memory _tokens, uint256[] memory _amounts) = AaveV3Incentive._claimRewards(receiptToken());
-        uint256 _length = _tokens.length;
-        for (uint256 i; i < _length; ++i) {
-            if (_amounts[i] > 0) {
-                _safeSwapExactInput(_tokens[i], address(collateralToken()), _amounts[i]);
-            }
-        }
+    /// @dev Override function defined in Strategy.sol to claim all rewards from protocol.
+    function _claimRewards() internal override {
+        AaveV3Incentive._claimRewards(receiptToken());
     }
 
     function _rebalance() internal override returns (uint256 _profit, uint256 _loss, uint256 _payback) {

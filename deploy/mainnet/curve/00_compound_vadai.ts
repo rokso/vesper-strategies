@@ -13,7 +13,6 @@ const func: DeployFunction = async function () {
     swapper: Address.swapper,
     curvePool: Address.Curve.Compound_Pool,
     curvePoolZap: Address.Curve.Compound_Pool_Zap,
-    curveToken: Address.CRV,
     depositAndStake: Address.Curve.DepositAndStake,
     useDynamicArray: false,
     slippage: 200, // 2%

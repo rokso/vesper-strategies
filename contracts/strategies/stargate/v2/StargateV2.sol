@@ -15,13 +15,10 @@ import {IStargateStaking} from "../../../interfaces/stargate/v2/IStargateStaking
 contract StargateV2 is Strategy {
     using SafeERC20 for IERC20;
 
-    address[] internal rewardTokens;
-
     /// @custom:storage-location erc7201:vesper.storage.Strategy.StargateV2
     struct StargateV2Storage {
         IStargatePool _stargatePool;
         IStargateStaking _stargateStaking;
-        address[] _rewardTokens;
     }
 
     bytes32 private constant StargateV2StorageLocation =
@@ -52,11 +49,6 @@ contract StargateV2 is Strategy {
 
         $._stargatePool = stargatePool_;
         $._stargateStaking = stargateStaking_;
-        $._rewardTokens = stargateStaking_.rewarder(IERC20(_stargateLp)).rewardTokens();
-    }
-
-    function getRewardTokens() external view returns (address[] memory) {
-        return rewardTokens;
     }
 
     function isReservedToken(address token_) public view override returns (bool) {
@@ -87,33 +79,13 @@ contract StargateV2 is Strategy {
         super._approveToken(amount_);
         collateralToken().forceApprove(address(stargatePool()), amount_);
         stargateLp().forceApprove(address(stargateStaking()), amount_);
-
-        address _swapper = address(swapper());
-        uint256 _rewardTokensLength = rewardTokens.length;
-        for (uint256 i; i < _rewardTokensLength; ++i) {
-            IERC20(rewardTokens[i]).forceApprove(_swapper, amount_);
-        }
-    }
-
-    function _claimAndSwapRewards() internal virtual override {
-        _claimRewards();
-        uint256 _rewardTokensLength = rewardTokens.length;
-        for (uint256 i; i < _rewardTokensLength; ++i) {
-            address _rewardToken = rewardTokens[i];
-            uint256 _amountIn = IERC20(_rewardToken).balanceOf(address(this));
-            if (_amountIn > 0) {
-                _safeSwapExactInput(_rewardToken, address(collateralToken()), _amountIn);
-            }
-        }
     }
 
     /// @dev Claim rewards from Staking contract
-    /// @dev Return values are not being used hence returning 0
-    function _claimRewards() internal override returns (address, uint256) {
+    function _claimRewards() internal override {
         IERC20[] memory _lpTokens = new IERC20[](1);
         _lpTokens[0] = stargateLp();
         stargateStaking().claim(_lpTokens);
-        return (address(0), 0);
     }
 
     function _deposit(uint256 collateralAmount_) internal virtual {

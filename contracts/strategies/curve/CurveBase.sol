@@ -47,7 +47,6 @@ abstract contract CurveBase is Strategy {
         address swapper;
         address curvePool;
         address curvePoolZap;
-        address curveToken;
         address depositAndStake;
         bool useDynamicArray;
         uint256 slippage;
@@ -58,7 +57,6 @@ abstract contract CurveBase is Strategy {
 
     /// @custom:storage-location erc7201:vesper.storage.Strategy.CurveBase
     struct CurveBaseStorage {
-        address _curveToken;
         address _curvePool;
         IERC20 _curveLp;
         ILiquidityGaugeV2 _curveGauge;
@@ -71,7 +69,6 @@ abstract contract CurveBase is Strategy {
         uint256 _slippage;
         uint256 _collateralIdx;
         address[] _underlyingTokens;
-        address[] _rewardTokens;
         bool _isMetaPool;
         bool _useDynamicArray;
         bool _useUnderlying;
@@ -95,7 +92,6 @@ abstract contract CurveBase is Strategy {
 
         if (
             params_.curvePool == address(0) ||
-            params_.curveToken == address(0) ||
             params_.depositAndStake == address(0) ||
             params_.weth == address(0) ||
             params_.masterOracle == address(0)
@@ -116,7 +112,6 @@ abstract contract CurveBase is Strategy {
             params_.curvePool,
             params_.weth
         );
-        $._curveToken = params_.curveToken;
         $._curvePool = params_.curvePool;
         $._curveLp = IERC20(_curveLp);
         $._curveGauge = ILiquidityGaugeV2(_curveGauge);
@@ -154,10 +149,6 @@ abstract contract CurveBase is Strategy {
         }
     }
 
-    function curveToken() public view returns (address) {
-        return _getCurveBaseStorage()._curveToken;
-    }
-
     function curvePool() public view returns (address) {
         return _getCurveBaseStorage()._curvePool;
     }
@@ -176,10 +167,6 @@ abstract contract CurveBase is Strategy {
 
     function depositAndStake() public view returns (address) {
         return _getCurveBaseStorage()._depositAndStake;
-    }
-
-    function getRewardTokens() public view returns (address[] memory) {
-        return _getCurveBaseStorage()._rewardTokens;
     }
 
     function getUnderlyingTokens() public view returns (address[] memory) {
@@ -232,20 +219,13 @@ abstract contract CurveBase is Strategy {
     function _approveToken(uint256 amount_) internal virtual override {
         super._approveToken(amount_);
 
-        address _swapper = address(swapper());
         CurveBaseStorage memory s = _getCurveBaseStorage();
-
-        address[] memory _rewardTokens = s._rewardTokens;
-        uint256 _rewardTokensLength = _rewardTokens.length;
-        for (uint256 i; i < _rewardTokensLength; ++i) {
-            IERC20(_rewardTokens[i]).forceApprove(_swapper, amount_);
-        }
-
         if (s._curvePoolZap != address(0)) {
             // It is needed for withdrawal
             s._curveLp.forceApprove(s._curvePoolZap, amount_);
         }
 
+        address _swapper = address(swapper());
         address[] memory _underlyingTokens = s._underlyingTokens;
         uint256 _nCoins = _underlyingTokens.length;
         for (uint256 i; i < _nCoins; i++) {
@@ -258,25 +238,7 @@ abstract contract CurveBase is Strategy {
         try ILiquidityGaugeV2(s._curveGauge).set_approve_deposit(s._depositAndStake, true) {} catch {}
     }
 
-    /**
-     * @dev Curve pool may have more than one reward token.
-     */
-    function _claimAndSwapRewards() internal override {
-        _claimRewards();
-        address _collateralToken = address(collateralToken());
-        address[] memory _rewardTokens = getRewardTokens();
-        uint256 _len = _rewardTokens.length;
-        for (uint256 i; i < _len; ++i) {
-            address _rewardToken = _rewardTokens[i];
-            uint256 _amountIn = IERC20(_rewardToken).balanceOf(address(this));
-            if (_amountIn > 0) {
-                _safeSwapExactInput(_rewardToken, _collateralToken, _amountIn);
-            }
-        }
-    }
-
-    /// @dev Return values are not being used hence returning 0
-    function _claimRewards() internal virtual override returns (address, uint256) {
+    function _claimRewards() internal override {
         ILiquidityGaugeV2 _curveGauge = curveGauge();
         if (block.chainid == 1) {
             CRV_MINTER.mint(address(_curveGauge));
@@ -289,7 +251,6 @@ abstract contract CurveBase is Strategy {
             // This call may fail in some scenarios
             // e.g. 3Crv gauge doesn't have such function
         }
-        return (address(0), 0);
     }
 
     // @dev Convex strategy will have to override this to unstake from gauge and stake in Booster
@@ -393,8 +354,6 @@ abstract contract CurveBase is Strategy {
             return (masterOracle().quote(tokenIn_, tokenOut_, amountIn_) * (MAX_BPS - slippage())) / MAX_BPS;
         }
     }
-
-    function _getRewardTokens() internal view virtual returns (address[] memory _rewardTokens);
 
     function _quoteLpToCoin(uint256 amountIn_) private view returns (uint256 _amountOut) {
         if (amountIn_ == 0) {
@@ -586,20 +545,6 @@ abstract contract CurveBase is Strategy {
     /************************************************************************************************
      *                          Governor/admin/keeper function                                      *
      ***********************************************************************************************/
-
-    /**
-     * @notice Rewards token in gauge can be updated any time. This method refresh list.
-     * It is recommended to claimAndSwapRewards before calling this function.
-     */
-    function refetchRewardTokens() external onlyGovernor {
-        // 1. Claim rewards before updating rewardTokens
-        _claimAndSwapRewards();
-        // 2. Update rewardTokens array
-        _getCurveBaseStorage()._rewardTokens = _getRewardTokens();
-        // 3. Approve tokens. If needed, forceApprove will set approval to zero before setting new value.
-        _approveToken(MAX_UINT_VALUE);
-    }
-
     function toggleWithdrawOneCoinFlag() external onlyKeeper {
         CurveBaseStorage storage $ = _getCurveBaseStorage();
         bool _newValue = !$._withdrawOneCoin;

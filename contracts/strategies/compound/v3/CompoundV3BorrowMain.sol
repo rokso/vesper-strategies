@@ -11,12 +11,10 @@ contract CompoundV3BorrowMain is CompoundV3Borrow {
     function initialize(
         address pool_,
         address swapper_,
-        address compRewards_,
-        address rewardToken_,
         address comet_,
         address borrowToken_,
         string memory name_
     ) public initializer {
-        __CompoundV3Borrow_init(pool_, swapper_, compRewards_, rewardToken_, comet_, borrowToken_, name_);
+        __CompoundV3Borrow_init(pool_, swapper_, comet_, borrowToken_, name_);
     }
 }

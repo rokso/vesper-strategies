@@ -14,7 +14,6 @@ const func: DeployFunction = async function () {
     swapper: Address.swapper,
     curvePool: Address.Curve.eUSD_USDC_POOL,
     curvePoolZap: ZeroAddress, // no zap needed
-    curveToken: Address.CRV,
     depositAndStake: Address.Curve.DepositAndStake,
     useDynamicArray: true,
     slippage: 200, // 2%

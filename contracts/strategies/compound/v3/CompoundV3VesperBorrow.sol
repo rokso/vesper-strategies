@@ -5,7 +5,6 @@ pragma solidity 0.8.25;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IVesperPool} from "../../../interfaces/vesper/IVesperPool.sol";
-import {VesperRewards} from "../../VesperRewards.sol";
 import {CompoundV3Borrow} from "./CompoundV3Borrow.sol";
 
 /// @title Deposit Collateral in Compound and earn interest by depositing borrowed token in a Vesper Pool.
@@ -33,14 +32,12 @@ contract CompoundV3VesperBorrow is CompoundV3Borrow {
     function initialize(
         address pool_,
         address swapper_,
-        address compRewards_,
-        address rewardToken_,
         address comet_,
         address borrowToken_,
         address vPool_,
         string memory name_
     ) external initializer {
-        __CompoundV3Borrow_init(pool_, swapper_, compRewards_, rewardToken_, comet_, borrowToken_, name_);
+        __CompoundV3Borrow_init(pool_, swapper_, comet_, borrowToken_, name_);
         if (address(IVesperPool(vPool_).token()) != borrowToken()) revert InvalidGrowPool();
         _getCompoundV3VesperBorrowStorage()._vPool = IVesperPool(vPool_);
     }
@@ -68,15 +65,6 @@ contract CompoundV3VesperBorrow is CompoundV3Borrow {
         super._approveToken(amount_);
         IVesperPool _vPool = vPool();
         IERC20(borrowToken()).forceApprove(address(_vPool), amount_);
-        VesperRewards._approveToken(_vPool, swapper(), amount_);
-    }
-
-    /// @dev Claim Compound and VSP rewards and convert to collateral token.
-    function _claimAndSwapRewards() internal override {
-        // Claim and swap Compound rewards
-        CompoundV3Borrow._claimAndSwapRewards();
-        // Claim and swap rewards from Vesper
-        VesperRewards._claimAndSwapRewards(vPool(), swapper(), address(collateralToken()));
     }
 
     function _getYTokensInProtocol() internal view override returns (uint256) {

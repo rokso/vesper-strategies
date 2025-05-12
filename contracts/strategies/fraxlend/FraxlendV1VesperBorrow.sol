@@ -6,7 +6,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IVesperPool} from "../../interfaces/vesper/IVesperPool.sol";
-import {VesperRewards} from "../VesperRewards.sol";
 import {FraxlendV1Borrow} from "./FraxlendV1Borrow.sol";
 
 /// @title Deposit Collateral in Fraxlend and generate yield by depositing borrowed token into the Vesper Pool.
@@ -62,13 +61,6 @@ contract FraxlendV1VesperBorrow is FraxlendV1Borrow {
         super._approveToken(amount_);
         IVesperPool _vPool = vPool();
         IERC20(borrowToken()).forceApprove(address(_vPool), amount_);
-        VesperRewards._approveToken(_vPool, swapper(), amount_);
-    }
-
-    /// @dev Claim VSP rewards and convert to collateral token.
-    function _claimAndSwapRewards() internal override {
-        // Claim and swap rewards from Vesper
-        VesperRewards._claimAndSwapRewards(vPool(), swapper(), address(collateralToken()));
     }
 
     function _getInvestedBorrowTokens() internal view override returns (uint256) {

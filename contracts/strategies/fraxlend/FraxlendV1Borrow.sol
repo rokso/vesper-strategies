@@ -7,7 +7,6 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {Strategy} from "../Strategy.sol";
-import {VesperRewards} from "../VesperRewards.sol";
 import {AggregatorV3Interface} from "../../interfaces/chainlink/AggregatorV3Interface.sol";
 import {IVesperPool} from "../../interfaces/vesper/IVesperPool.sol";
 import {IFraxlendPair} from "../../interfaces/fraxlend/IFraxlendPair.sol";
@@ -443,9 +442,10 @@ abstract contract FraxlendV1Borrow is Strategy {
                 ? _amountToRecover
                 : _extraBorrowBalance;
             // Do swap and transfer
-            uint256 _collateralBefore = _collateralToken.balanceOf(address(this));
-            _safeSwapExactInput(_borrowToken, address(_collateralToken), _recoveryAmount);
-            _collateralToken.safeTransfer(pool(), _collateralToken.balanceOf(address(this)) - _collateralBefore);
+            uint256 _amountOut = _trySwapExactInput(_borrowToken, address(_collateralToken), _recoveryAmount);
+            if (_amountOut > 0) {
+                _collateralToken.safeTransfer(pool(), _amountOut);
+            }
         }
     }
 

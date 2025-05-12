@@ -236,22 +236,9 @@ abstract contract AaveV3Borrow is Strategy {
         return unwrappedAmount_;
     }
 
-    /// @dev Claim all rewards and convert to collateral.
-    /// Overriding _claimAndSwapRewards will help child contract otherwise override _claimReward.
-    function _claimAndSwapRewards() internal virtual override {
-        (address[] memory _tokens, uint256[] memory _amounts) = AaveV3Incentive._claimRewards(receiptToken());
-        uint256 _length = _tokens.length;
-        address _wrappedCollateral = address(wrappedCollateral());
-        address _borrowToken = borrowToken();
-        for (uint256 i; i < _length; ++i) {
-            if (_amounts[i] > 0 && _tokens[i] != _wrappedCollateral) {
-                // borrow token already has approval
-                if (_tokens[i] != _borrowToken) {
-                    IERC20(_tokens[i]).forceApprove(address(swapper()), _amounts[i]);
-                }
-                _safeSwapExactInput(_tokens[i], _wrappedCollateral, _amounts[i]);
-            }
-        }
+    /// @dev Override function defined in Strategy.sol to claim all rewards from protocol.
+    function _claimRewards() internal override {
+        AaveV3Incentive._claimRewards(receiptToken());
     }
 
     function _depositToAave(uint256 amount_, ILendingPool aaveLendingPool_) internal virtual {

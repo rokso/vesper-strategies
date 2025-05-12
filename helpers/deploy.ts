@@ -98,6 +98,10 @@ export const deploy = async (hre: HardhatRuntimeEnvironment, params: DeployParam
       args: constructorArgs,
     });
 
+    if (hre.network.config.chainId !== 31337) {
+      await hre.run("verify:verify", { address: proxyDeployment.address, constructorArguments: constructorArgs });
+    }
+
     return { ...proxyDeployment, newlyDeployed: true };
   }
 

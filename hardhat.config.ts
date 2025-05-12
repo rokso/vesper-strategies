@@ -4,6 +4,7 @@ import "@openzeppelin/hardhat-upgrades";
 import "hardhat-deploy";
 import "hardhat-deploy-ethers";
 import "dotenv/config";
+import "./tasks/create-release";
 import "./tasks/impersonate";
 
 const localhost = process.env.FORK_NODE_URL || "http://localhost:8545";
@@ -12,7 +13,7 @@ const optimismNodeUrl = process.env.OPTIMISM_NODE_URL || "";
 const baseNodeUrl = process.env.BASE_NODE_URL || "";
 
 function getChainConfig(nodeUrl: string) {
-  if (["eth.connect", "eth.mainnet", "mainnet.infura"].some((v) => nodeUrl.includes(v))) {
+  if (["eth.connect", "eth-mainnet", "mainnet.infura"].some((v) => nodeUrl.includes(v))) {
     return { chainId: 1, deploy: ["deploy/mainnet"] };
   }
 

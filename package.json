@@ -1,6 +1,6 @@
 {
-  "name": "vesper-strategies-2",
-  "version": "5.2.0",
+  "name": "vesper-strategies",
+  "version": "5.8.0",
   "description": "Strategies for Vesper pools",
   "license": "MIT",
   "directories": {

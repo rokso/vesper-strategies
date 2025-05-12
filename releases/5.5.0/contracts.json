@@ -1,0 +1,12 @@
+{
+  "version": "5.5.0",
+  "networks": {
+    "mainnet": {
+      "Convex_Implementation": "0x58D608Cf3195f1db39f7B2735f8Aa1848194ca06",
+      "Convex_eUSD_USDC": "0xb292cAE406960EC3365C3c233445D835F8F1Aece",
+      "Convex_eUSD_USDC_Proxy": "0xb292cAE406960EC3365C3c233445D835F8F1Aece",
+      "Convex_ynETHx_ETH": "0x1f5dF316ce13b82f77e6e4368C509Ff208887E54",
+      "Convex_ynETHx_ETH_Proxy": "0x1f5dF316ce13b82f77e6e4368C509Ff208887E54"
+    }
+  }
+}

@@ -226,7 +226,7 @@ abstract contract FraxlendV1Borrow is Strategy {
         }
     }
 
-    function _getAvailableLiquidity() internal view virtual returns (uint256) {
+    function _getAvailableLiquidity() internal view returns (uint256) {
         IFraxlendPair _fraxlendPair = fraxlendPair();
         uint256 _totalAsset = _fraxlendPair.totalAsset().amount;
         uint256 _totalBorrow = _fraxlendPair.totalBorrow().amount;
@@ -368,7 +368,7 @@ abstract contract FraxlendV1Borrow is Strategy {
     }
 
     /// @dev Repay borrow tokens to Fraxlend. Withdraw borrowTokens from end protocol if applicable.
-    function _repayBorrowTokens(uint256 amount_) internal virtual {
+    function _repayBorrowTokens(uint256 amount_) internal {
         _withdrawBorrowTokens(amount_);
         IFraxlendPair _fraxlendPair = fraxlendPair();
         uint256 _fraxShare = _fraxlendPair.toBorrowShares(amount_, false);

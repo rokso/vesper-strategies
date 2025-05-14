@@ -106,7 +106,7 @@ abstract contract AaveV3Borrow is Strategy {
         return _getAaveV3BorrowStorage()._borrowToken;
     }
 
-    function isReservedToken(address token_) public view virtual override returns (bool) {
+    function isReservedToken(address token_) public view override returns (bool) {
         return
             token_ == address(collateralToken()) ||
             token_ == receiptToken() ||
@@ -241,7 +241,7 @@ abstract contract AaveV3Borrow is Strategy {
         AaveV3Incentive._claimRewards(receiptToken());
     }
 
-    function _depositToAave(uint256 amount_, ILendingPool aaveLendingPool_) internal virtual {
+    function _depositToAave(uint256 amount_, ILendingPool aaveLendingPool_) internal {
         uint256 _wrappedAmount = _wrap(amount_);
         if (_wrappedAmount > 0) {
             // solhint-disable-next-line no-empty-blocks
@@ -277,11 +277,7 @@ abstract contract AaveV3Borrow is Strategy {
      * @param amountIn_ amount of tokenIn_
      * @return _amountOut amount of tokenOut_ for amountIn_ of tokenIn_
      */
-    function _quote(
-        address tokenIn_,
-        address tokenOut_,
-        uint256 amountIn_
-    ) internal view virtual returns (uint256 _amountOut) {
+    function _quote(address tokenIn_, address tokenOut_, uint256 amountIn_) internal view returns (uint256 _amountOut) {
         IAaveOracle _aaveOracle = aavePoolAddressesProvider().getPriceOracle();
         // Aave oracle prices are in WETH. Price is in 18 decimal.
         uint256 _tokenInPrice = _aaveOracle.getAssetPrice(tokenIn_);
@@ -388,7 +384,7 @@ abstract contract AaveV3Borrow is Strategy {
         }
     }
 
-    function _repayY(uint256 amount_, ILendingPool aaveLendingPool_) internal virtual {
+    function _repayY(uint256 amount_, ILendingPool aaveLendingPool_) internal {
         _beforeRepayY(amount_);
         aaveLendingPool_.repay(borrowToken(), amount_, 2, address(this));
     }

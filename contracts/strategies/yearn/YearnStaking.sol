@@ -49,7 +49,7 @@ contract YearnStaking is Strategy {
         $._yTokenReward = IYToken(stakingRewards_.rewardsToken());
     }
 
-    function isReservedToken(address token_) public view virtual override returns (bool) {
+    function isReservedToken(address token_) public view override returns (bool) {
         return token_ == receiptToken();
     }
 
@@ -74,7 +74,7 @@ contract YearnStaking is Strategy {
     }
 
     /// @notice Approve all required tokens
-    function _approveToken(uint256 amount_) internal virtual override {
+    function _approveToken(uint256 amount_) internal override {
         super._approveToken(amount_);
         address _yToken = address(yToken());
         collateralToken().forceApprove(_yToken, amount_);

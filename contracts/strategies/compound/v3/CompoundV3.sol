@@ -21,7 +21,7 @@ contract CompoundV3 is Strategy {
         return IComet(receiptToken());
     }
 
-    function isReservedToken(address token_) public view virtual override returns (bool) {
+    function isReservedToken(address token_) public view override returns (bool) {
         return token_ == address(comet());
     }
 
@@ -30,7 +30,7 @@ contract CompoundV3 is Strategy {
     }
 
     /// @notice Approve all required tokens
-    function _approveToken(uint256 amount_) internal virtual override {
+    function _approveToken(uint256 amount_) internal override {
         super._approveToken(amount_);
         collateralToken().forceApprove(address(comet()), amount_);
     }
@@ -38,7 +38,7 @@ contract CompoundV3 is Strategy {
     /**
      * @dev Deposit collateral in Compound.
      */
-    function _deposit(uint256 amount_) internal virtual {
+    function _deposit(uint256 amount_) internal {
         if (amount_ > 0) {
             comet().supply(address(collateralToken()), amount_);
         }
@@ -54,7 +54,7 @@ contract CompoundV3 is Strategy {
     /**
      * @dev Generate report for pools accounting and also send profit and any payback to pool.
      */
-    function _rebalance() internal virtual override returns (uint256 _profit, uint256 _loss, uint256 _payback) {
+    function _rebalance() internal override returns (uint256 _profit, uint256 _loss, uint256 _payback) {
         IVesperPool _pool = IVesperPool(pool());
         uint256 _excessDebt = _pool.excessDebt(address(this));
         uint256 _totalDebt = _pool.totalDebtOf(address(this));

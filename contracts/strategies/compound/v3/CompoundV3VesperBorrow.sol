@@ -47,7 +47,7 @@ contract CompoundV3VesperBorrow is CompoundV3Borrow {
         return IERC20(borrowToken()).balanceOf(address(this)) + _getYTokensInProtocol();
     }
 
-    function isReservedToken(address token_) public view virtual override returns (bool) {
+    function isReservedToken(address token_) public view override returns (bool) {
         return super.isReservedToken(token_) || token_ == address(vPool());
     }
 

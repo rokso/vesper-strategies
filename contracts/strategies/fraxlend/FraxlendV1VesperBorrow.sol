@@ -43,7 +43,7 @@ contract FraxlendV1VesperBorrow is FraxlendV1Borrow {
         _getFraxlendV1VesperBorrowStorage()._vPool = IVesperPool(vPool_);
     }
 
-    function isReservedToken(address token_) public view virtual override returns (bool) {
+    function isReservedToken(address token_) public view override returns (bool) {
         return super.isReservedToken(token_) || token_ == address(vPool());
     }
 

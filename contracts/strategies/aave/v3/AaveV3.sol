@@ -62,7 +62,7 @@ contract AaveV3 is Strategy {
      * @notice Report total value locked in this strategy
      * @dev aToken and collateral are 1:1
      */
-    function tvl() public view virtual override returns (uint256 _tvl) {
+    function tvl() public view override returns (uint256 _tvl) {
         // receiptToken is aToken
         _tvl = IERC20(receiptToken()).balanceOf(address(this)) + collateralToken().balanceOf(address(this));
     }

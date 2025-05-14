@@ -39,7 +39,7 @@ contract Yearn is Strategy {
         _getYearnStorage()._yTokenDecimals = 10 ** IYToken(receiptToken_).decimals();
     }
 
-    function isReservedToken(address token_) public view virtual override returns (bool) {
+    function isReservedToken(address token_) public view override returns (bool) {
         return token_ == receiptToken();
     }
 
@@ -56,7 +56,7 @@ contract Yearn is Strategy {
     }
 
     /// @notice Approve all required tokens
-    function _approveToken(uint256 amount_) internal virtual override {
+    function _approveToken(uint256 amount_) internal override {
         super._approveToken(amount_);
         collateralToken().forceApprove(address(yToken()), amount_);
     }

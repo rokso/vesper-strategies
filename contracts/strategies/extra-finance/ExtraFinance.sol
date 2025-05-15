@@ -61,11 +61,6 @@ contract ExtraFinance is Strategy {
         return address(eToken());
     }
 
-    /// @inheritdoc Strategy
-    function isReservedToken(address token_) public view override returns (bool) {
-        return token_ == receiptToken();
-    }
-
     function lendingPool() public view returns (ILendingPool) {
         return _getExtraFinanceStorage()._lendingPool;
     }

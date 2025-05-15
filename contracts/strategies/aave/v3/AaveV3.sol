@@ -54,10 +54,6 @@ contract AaveV3 is Strategy {
         return _getAaveV3Storage()._poolAddressesProvider;
     }
 
-    function isReservedToken(address token_) public view override returns (bool) {
-        return receiptToken() == token_ || address(collateralToken()) == token_;
-    }
-
     /**
      * @notice Report total value locked in this strategy
      * @dev aToken and collateral are 1:1

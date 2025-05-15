@@ -39,10 +39,6 @@ contract Yearn is Strategy {
         _getYearnStorage()._yTokenDecimals = 10 ** IYToken(receiptToken_).decimals();
     }
 
-    function isReservedToken(address token_) public view override returns (bool) {
-        return token_ == receiptToken();
-    }
-
     function tvl() external view override returns (uint256) {
         return _getCollateralFromYearn() + collateralToken().balanceOf(address(this));
     }

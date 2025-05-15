@@ -49,10 +49,6 @@ contract YearnStaking is Strategy {
         $._yTokenReward = IYToken(stakingRewards_.rewardsToken());
     }
 
-    function isReservedToken(address token_) public view override returns (bool) {
-        return token_ == receiptToken();
-    }
-
     function stakingRewards() public view returns (IStakingRewards) {
         return _getYearnStakingStorage()._stakingRewards;
     }

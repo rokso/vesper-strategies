@@ -107,7 +107,9 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
     }
 
     /// @notice Check whether given token is reserved or not. Reserved tokens are not allowed to sweep.
-    function isReservedToken(address token_) public view virtual override returns (bool);
+    function isReservedToken(address token_) public view virtual override returns (bool) {
+        return token_ == receiptToken() || token_ == address(collateralToken());
+    }
 
     /// @notice Return list of keepers
     function keepers() external view override returns (address[] memory) {

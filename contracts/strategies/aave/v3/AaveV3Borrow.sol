@@ -107,11 +107,7 @@ abstract contract AaveV3Borrow is Strategy {
     }
 
     function isReservedToken(address token_) public view override returns (bool) {
-        return
-            token_ == address(collateralToken()) ||
-            token_ == receiptToken() ||
-            address(vdToken()) == token_ ||
-            borrowToken() == token_;
+        return super.isReservedToken(token_) || token_ == borrowToken();
     }
 
     function maxBorrowLimit() public view returns (uint256) {

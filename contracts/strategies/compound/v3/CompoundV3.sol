@@ -21,10 +21,6 @@ contract CompoundV3 is Strategy {
         return IComet(receiptToken());
     }
 
-    function isReservedToken(address token_) public view override returns (bool) {
-        return token_ == address(comet());
-    }
-
     function tvl() external view override returns (uint256) {
         return comet().balanceOf(address(this)) + collateralToken().balanceOf(address(this));
     }

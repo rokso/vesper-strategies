@@ -98,7 +98,7 @@ abstract contract FraxlendV1Borrow is Strategy {
     }
 
     function isReservedToken(address token_) public view virtual override returns (bool) {
-        return token_ == receiptToken() || token_ == address(collateralToken()) || token_ == borrowToken();
+        return super.isReservedToken(token_) || token_ == borrowToken();
     }
 
     function maxBorrowLimit() public view returns (uint256) {

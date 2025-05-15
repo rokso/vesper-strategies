@@ -33,10 +33,6 @@ contract EulerV2 is Strategy {
         return IEulerV2(receiptToken());
     }
 
-    function isReservedToken(address token_) public view override returns (bool) {
-        return token_ == address(euler());
-    }
-
     function tvl() external view override returns (uint256) {
         return _getCollateralInProtocol() + collateralToken().balanceOf(address(this));
     }

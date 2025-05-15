@@ -44,12 +44,16 @@ contract AaveV3VesperBorrow is AaveV3Borrow {
         _getAaveV3VesperBorrowStorage()._vPool = IVesperPool(vPool_);
     }
 
+    function isReservedToken(address token_) public view override returns (bool) {
+        return super.isReservedToken(token_) || token_ == address(vPool());
+    }
+
     function vPool() public view returns (IVesperPool) {
         return _getAaveV3VesperBorrowStorage()._vPool;
     }
 
     /// @notice After borrowing Y, deposit to Vesper Pool
-    function _afterBorrowY(uint256 amount_) internal  override {
+    function _afterBorrowY(uint256 amount_) internal override {
         vPool().deposit(amount_);
     }
 
@@ -61,12 +65,12 @@ contract AaveV3VesperBorrow is AaveV3Borrow {
     }
 
     /// @notice Before repaying Y, withdraw it from Vesper Pool
-    function _beforeRepayY(uint256 amount_) internal  override {
+    function _beforeRepayY(uint256 amount_) internal override {
         _withdrawY(amount_);
     }
 
     /// @dev borrowToken balance here + borrowToken balance deposited in Vesper Pool
-    function _getInvestedBorrowBalance() internal view  override returns (uint256) {
+    function _getInvestedBorrowBalance() internal view override returns (uint256) {
         IVesperPool _vPool = vPool();
         return
             IERC20(borrowToken()).balanceOf(address(this)) +
@@ -74,7 +78,7 @@ contract AaveV3VesperBorrow is AaveV3Borrow {
     }
 
     /// @notice Withdraw _shares proportional to collateral amount_ from vPool
-    function _withdrawY(uint256 amount_) internal  override {
+    function _withdrawY(uint256 amount_) internal override {
         IVesperPool _vPool = vPool();
         if (amount_ > 0) {
             uint256 _pricePerShare = _vPool.pricePerShare();

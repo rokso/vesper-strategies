@@ -29,11 +29,6 @@ contract MorphoVault is Strategy {
         if (IMetaMorpho(receiptToken_).asset() != address(IVesperPool(pool_).token())) revert InvalidVault();
     }
 
-    /// @dev Morpho vault token is not reserved as we will sweep it out for swap.
-    function isReservedToken(address token_) public view override returns (bool) {
-        return token_ == address(metaMorpho());
-    }
-
     function metaMorpho() public view returns (IMetaMorpho) {
         return IMetaMorpho(receiptToken());
     }

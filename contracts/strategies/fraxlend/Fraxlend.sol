@@ -29,10 +29,6 @@ abstract contract Fraxlend is Strategy {
         return IFraxlendPair(receiptToken());
     }
 
-    function isReservedToken(address token_) public view override returns (bool) {
-        return token_ == receiptToken();
-    }
-
     function tvl() external view override returns (uint256) {
         return _balanceOfUnderlying() + collateralToken().balanceOf(address(this));
     }

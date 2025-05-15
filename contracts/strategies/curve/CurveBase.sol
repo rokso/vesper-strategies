@@ -172,11 +172,6 @@ abstract contract CurveBase is Strategy {
         return _getCurveBaseStorage()._underlyingTokens;
     }
 
-    /// @dev Check whether given token is reserved or not. Reserved tokens are not allowed to sweep.
-    function isReservedToken(address token_) public view override returns (bool) {
-        return token_ == address(curveLp()) || token_ == address(collateralToken());
-    }
-
     // Gets LP value not staked in gauge
     function lpBalanceHere() public view returns (uint256 _lpHere) {
         _lpHere = curveLp().balanceOf(address(this));

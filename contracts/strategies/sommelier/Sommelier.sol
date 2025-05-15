@@ -27,10 +27,6 @@ contract Sommelier is Strategy, SommelierBase {
         if (ICellar(receiptToken_).asset() != address(IVesperPool(pool_).token())) revert InvalidReceiptToken();
     }
 
-    function isReservedToken(address token_) public view override returns (bool) {
-        return token_ == receiptToken();
-    }
-
     function tvl() public view override returns (uint256) {
         return _getAssetsInSommelier() + collateralToken().balanceOf(address(this));
     }

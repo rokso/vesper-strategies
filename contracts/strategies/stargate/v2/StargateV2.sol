@@ -51,10 +51,6 @@ contract StargateV2 is Strategy {
         $._stargateStaking = stargateStaking_;
     }
 
-    function isReservedToken(address token_) public view override returns (bool) {
-        return token_ == receiptToken();
-    }
-
     function lpAmountStaked() public view returns (uint256 _lpAmountStaked) {
         _lpAmountStaked = stargateStaking().balanceOf(stargateLp(), address(this));
     }

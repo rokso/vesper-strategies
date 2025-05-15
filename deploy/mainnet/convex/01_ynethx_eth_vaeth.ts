@@ -16,7 +16,7 @@ const func: DeployFunction = async function () {
     curvePoolZap: ZeroAddress, // no zap needed
     depositAndStake: Address.Curve.DepositAndStake,
     useDynamicArray: true,
-    slippage: 200, // 2%
+    slippage: 50, // 0.5%
     weth: Address.WETH,
     masterOracle: Address.masterOracle,
     name: strategyName,

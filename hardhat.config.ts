@@ -1,6 +1,7 @@
 import { HardhatUserConfig } from "hardhat/types";
 import "@nomicfoundation/hardhat-toolbox";
 import "@openzeppelin/hardhat-upgrades";
+import "hardhat-contract-sizer";
 import "hardhat-deploy";
 import "hardhat-deploy-ethers";
 import "dotenv/config";
@@ -109,12 +110,16 @@ const config: HardhatUserConfig = {
     deployer: process.env.DEPLOYER || 0,
   },
 
+  contractSizer: {
+    runOnCompile: !!process.env.RUN_CONTRACT_SIZER,
+  },
+
   solidity: {
     version: "0.8.25",
     settings: {
       optimizer: {
         enabled: true,
-        runs: 1000,
+        runs: 100,
       },
     },
   },

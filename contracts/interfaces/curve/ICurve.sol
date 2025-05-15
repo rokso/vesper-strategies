@@ -31,17 +31,32 @@ interface IDepositAndStake {
 }
 
 interface IWithdraw {
-    // Remove liquidity one coin
-    function remove_liquidity_one_coin(uint256 _token_amount, int128 i, uint256 _min_amount) external;
+    // Calculate collateral out if remove_liquidity_one_coin is used
+    // For plain Curve pools
+    function calc_withdraw_one_coin(uint256 _token_amount, int128 i) external view returns (uint256);
 
+    // For Curve pools where Zap contract is used i.e. Meta pools
+    function calc_withdraw_one_coin(address _pool, uint256 _token_amount, int128 i) external view returns (uint256);
+
+    // Remove liquidity one coin
+    // For plain Curve pools
+    function remove_liquidity_one_coin(uint256 _token_amount, int128 i, uint256 _min_amount) external returns (uint256);
+
+    // For LendingToken Curve pools where use_underlying flag exists
     function remove_liquidity_one_coin(
         uint256 _token_amount,
         int128 i,
         uint256 _min_amount,
         bool _use_underlying
-    ) external;
+    ) external returns (uint256);
 
-    function remove_liquidity_one_coin(address _pool, uint256 _burn_amount, int128 i, uint256 _min_amount) external;
+    // For Curve pools where Zap contract is used i.e. Meta pools
+    function remove_liquidity_one_coin(
+        address _pool,
+        uint256 _burn_amount,
+        int128 i,
+        uint256 _min_amount
+    ) external returns (uint256);
 
     // Remove liquidity in all tokens
     // For plain Curve pools

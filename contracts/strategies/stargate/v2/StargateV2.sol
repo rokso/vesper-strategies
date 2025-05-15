@@ -75,7 +75,7 @@ contract StargateV2 is Strategy {
         return _getCollateralInStargate() + collateralToken().balanceOf(address(this));
     }
 
-    function _approveToken(uint256 amount_) internal virtual override {
+    function _approveToken(uint256 amount_) internal override {
         super._approveToken(amount_);
         collateralToken().forceApprove(address(stargatePool()), amount_);
         stargateLp().forceApprove(address(stargateStaking()), amount_);

@@ -30,7 +30,7 @@ contract MorphoVault is Strategy {
     }
 
     /// @dev Morpho vault token is not reserved as we will sweep it out for swap.
-    function isReservedToken(address token_) public view virtual override returns (bool) {
+    function isReservedToken(address token_) public view override returns (bool) {
         return token_ == address(metaMorpho());
     }
 
@@ -43,7 +43,7 @@ contract MorphoVault is Strategy {
     }
 
     /// @notice Approve all required tokens
-    function _approveToken(uint256 amount_) internal virtual override {
+    function _approveToken(uint256 amount_) internal override {
         super._approveToken(amount_);
         collateralToken().forceApprove(address(metaMorpho()), amount_);
     }
@@ -51,7 +51,7 @@ contract MorphoVault is Strategy {
     /**
      * @dev Deposit collateral in Morpho Vault.
      */
-    function _deposit(uint256 amount_) internal virtual {
+    function _deposit(uint256 amount_) internal {
         if (amount_ > 0) {
             metaMorpho().deposit(amount_, address(this));
         }
@@ -66,7 +66,7 @@ contract MorphoVault is Strategy {
     /**
      * @dev Generate report for pools accounting and also send profit and any payback to pool.
      */
-    function _rebalance() internal virtual override returns (uint256 _profit, uint256 _loss, uint256 _payback) {
+    function _rebalance() internal override returns (uint256 _profit, uint256 _loss, uint256 _payback) {
         IVesperPool _pool = IVesperPool(pool());
         uint256 _totalDebt = _pool.totalDebtOf(address(this));
         uint256 _excessDebt = _pool.excessDebt(address(this));

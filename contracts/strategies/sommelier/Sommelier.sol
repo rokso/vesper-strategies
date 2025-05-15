@@ -31,7 +31,7 @@ contract Sommelier is Strategy, SommelierBase {
         return token_ == receiptToken();
     }
 
-    function tvl() public view virtual override returns (uint256) {
+    function tvl() public view override returns (uint256) {
         return _getAssetsInSommelier() + collateralToken().balanceOf(address(this));
     }
 

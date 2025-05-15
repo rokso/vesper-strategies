@@ -113,7 +113,7 @@ abstract contract CompoundV3Borrow is Strategy {
 
     /// @dev Borrow Y from Compound. _afterBorrowY hook can be used to do anything with borrowed amount.
     /// @dev Override to handle ETH
-    function _borrowY(uint256 amount_) internal virtual {
+    function _borrowY(uint256 amount_) internal {
         if (amount_ > 0) {
             comet().withdraw(borrowToken(), amount_);
             _afterBorrowY(amount_);
@@ -204,7 +204,7 @@ abstract contract CompoundV3Borrow is Strategy {
         }
     }
 
-    function _getAvailableLiquidity() internal view virtual returns (uint256) {
+    function _getAvailableLiquidity() internal view returns (uint256) {
         IComet _comet = comet();
         uint256 _totalSupply = _comet.totalSupply();
         uint256 _totalBorrow = _comet.totalBorrow();
@@ -214,7 +214,7 @@ abstract contract CompoundV3Borrow is Strategy {
     function _getYTokensInProtocol() internal view virtual returns (uint256) {}
 
     /// @dev Deposit collateral aka X in Compound. Override to handle ETH
-    function _mintX(uint256 amount_) internal virtual {
+    function _mintX(uint256 amount_) internal {
         if (amount_ > 0) {
             comet().supply(address(collateralToken()), amount_);
         }
@@ -304,7 +304,7 @@ abstract contract CompoundV3Borrow is Strategy {
 
     /// @dev Repay Y to Compound V3. Withdraw Y from end protocol if applicable.
     /// @dev Override this to handle ETH
-    function _repayY(uint256 amount_) internal virtual {
+    function _repayY(uint256 amount_) internal {
         _withdrawY(amount_);
         comet().supply(borrowToken(), amount_);
     }

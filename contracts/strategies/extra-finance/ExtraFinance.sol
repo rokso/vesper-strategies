@@ -57,12 +57,12 @@ contract ExtraFinance is Strategy {
     }
 
     /// @dev override receiptToken as eToken can be updated via migrateReserve function
-    function receiptToken() public view virtual override returns (address) {
+    function receiptToken() public view override returns (address) {
         return address(eToken());
     }
 
     /// @inheritdoc Strategy
-    function isReservedToken(address token_) public view virtual override returns (bool) {
+    function isReservedToken(address token_) public view override returns (bool) {
         return token_ == receiptToken();
     }
 
@@ -84,7 +84,7 @@ contract ExtraFinance is Strategy {
     }
 
     /// @notice Approve all required tokens
-    function _approveToken(uint256 amount_) internal virtual override {
+    function _approveToken(uint256 amount_) internal override {
         ExtraFinanceStorage storage $ = _getExtraFinanceStorage();
         address _lendingPool = address($._lendingPool);
         IERC20 _eToken = $._eToken;
@@ -114,7 +114,7 @@ contract ExtraFinance is Strategy {
     }
 
     /// @dev Deposit collateral and stake the received eTokens
-    function _deposit(uint256 amount_) internal virtual {
+    function _deposit(uint256 amount_) internal {
         if (amount_ > 0) {
             lendingPool().deposit(reserveId(), amount_, address(this), 0);
             uint256 _eTokenBalance = eToken().balanceOf(address(this));
@@ -130,7 +130,7 @@ contract ExtraFinance is Strategy {
     }
 
     /// @dev Generate report for pools accounting and also send profit and any payback to pool.
-    function _rebalance() internal virtual override returns (uint256 _profit, uint256 _loss, uint256 _payback) {
+    function _rebalance() internal override returns (uint256 _profit, uint256 _loss, uint256 _payback) {
         IVesperPool _pool = IVesperPool(pool());
         uint256 _excessDebt = _pool.excessDebt(address(this));
         uint256 _totalDebt = _pool.totalDebtOf(address(this));

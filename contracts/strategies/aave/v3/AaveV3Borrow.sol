@@ -106,7 +106,7 @@ abstract contract AaveV3Borrow is Strategy {
         return _getAaveV3BorrowStorage()._borrowToken;
     }
 
-    function isReservedToken(address token_) public view override returns (bool) {
+    function isReservedToken(address token_) public view virtual override returns (bool) {
         return super.isReservedToken(token_) || token_ == borrowToken();
     }
 

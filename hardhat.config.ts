@@ -111,7 +111,7 @@ const config: HardhatUserConfig = {
   },
 
   contractSizer: {
-    runOnCompile: !!process.env.RUN_CONTRACT_SIZER,
+    runOnCompile: process.env.RUN_CONTRACT_SIZER === "true" ? true : false,
   },
 
   solidity: {

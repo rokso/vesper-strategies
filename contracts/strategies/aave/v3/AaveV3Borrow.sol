@@ -69,7 +69,7 @@ abstract contract AaveV3Borrow is Strategy {
         address borrowToken_,
         address poolAddressesProvider_,
         string memory name_
-    ) internal initializer {
+    ) internal onlyInitializing {
         __Strategy_init(pool_, swapper_, receiptToken_, name_);
 
         if (borrowToken_ == address(0) || poolAddressesProvider_ == address(0)) revert AddressIsNull();

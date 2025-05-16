@@ -83,7 +83,7 @@ abstract contract CurveBase is Strategy {
         }
     }
 
-    function __CurveBase_init(CurveInitParams memory params_) internal initializer {
+    function __CurveBase_init(CurveInitParams memory params_) internal onlyInitializing {
         // init require non-zero value for receiptToken hence setting it to 0x1.
         // receiptToken is overridden in this contract to return curveLp address as receiptToken
         __Strategy_init(params_.pool, params_.swapper, address(0x1), params_.name);

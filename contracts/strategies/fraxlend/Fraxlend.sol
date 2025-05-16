@@ -20,7 +20,7 @@ abstract contract Fraxlend is Strategy {
         address swapper_,
         address receiptToken_,
         string memory name_
-    ) internal initializer {
+    ) internal onlyInitializing {
         __Strategy_init(pool_, swapper_, receiptToken_, name_);
         if (IFraxlendPair(receiptToken_).asset() != address(collateralToken())) revert CollateralMismatch();
     }

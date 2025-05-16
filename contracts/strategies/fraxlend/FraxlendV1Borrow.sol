@@ -63,7 +63,7 @@ abstract contract FraxlendV1Borrow is Strategy {
         address fraxlendPair_,
         address borrowToken_,
         string memory name_
-    ) internal initializer {
+    ) internal onlyInitializing {
         __Strategy_init(pool_, swapper_, fraxlendPair_, name_);
 
         if (borrowToken_ == address(0)) revert AddressIsNull();

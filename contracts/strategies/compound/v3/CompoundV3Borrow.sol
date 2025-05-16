@@ -56,7 +56,7 @@ abstract contract CompoundV3Borrow is Strategy {
         address comet_,
         address borrowToken_,
         string memory name_
-    ) internal initializer {
+    ) internal onlyInitializing {
         __Strategy_init(pool_, swapper_, comet_, name_);
         if (borrowToken_ == address(0)) revert AddressIsNull();
 

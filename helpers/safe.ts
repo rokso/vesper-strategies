@@ -104,6 +104,7 @@ const proposeSafeTransaction = async (hre: HardhatRuntimeEnvironment, txs: MetaT
     const safeTransaction = await protocolKit.createTransaction({
       transactions: safeTransactionData,
       onlyCalls: true,
+      options: { nonce: Number(await apiKit.getNextNonce(safeAddress)) },
     });
 
     const safeTxHash = await protocolKit.getTransactionHash(safeTransaction);

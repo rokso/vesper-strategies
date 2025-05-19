@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployResult, type Deployment } from "hardhat-deploy/types";
-import { mergeABIs } from "hardhat-deploy/dist/src/utils";
 import { executeOrStoreTxIfMultisig } from "./deploy-helpers";
 import { upgrades } from "hardhat";
 
@@ -35,7 +34,7 @@ const validateUpgrade = async (
 
 const getImplementation = async (hre: HardhatRuntimeEnvironment, proxyAddress: string): Promise<string> => {
   const implementationStorage = await hre.ethers.provider.getStorage(proxyAddress, IMPLEMENTATION_SLOT);
-  const implementationAddress = hre.ethers.getAddress(`0x${implementationStorage.substr(-40)}`);
+  const implementationAddress = hre.ethers.getAddress(`0x${implementationStorage.slice(-40)}`);
   return implementationAddress;
 };
 
@@ -51,16 +50,22 @@ export const deploy = async (hre: HardhatRuntimeEnvironment, params: DeployParam
 
   const implementationAlias = `${contract}_Implementation`;
 
-  const oldImplDeployment = await getOrNull(implementationAlias);
+  // Note: We are reading deployment from json file that corresponds to `alias` and not `implementationAlias`.
+  // The reason being, `alias` is being created for each deployment and will not change until upgrade happens while
+  // `implementationAlias` hold information in context of common implementation deployment and it will be updated
+  // with each new deployment due to change in solidity code.
+  const oldImplDeployment = await getOrNull(alias);
   if (oldImplDeployment) {
     await validateUpgrade(hre, oldImplDeployment, contract);
   }
 
-  const { address: implementationAddress, abi: implementationAbi } = await deploy(implementationAlias, {
+  const implementationDeployment = await deploy(implementationAlias, {
     contract: contract,
     from: deployer,
     log: true,
   });
+
+  const { address: implementationAddress } = implementationDeployment;
 
   const proxyAlias = `${alias}_Proxy`;
 
@@ -88,14 +93,11 @@ export const deploy = async (hre: HardhatRuntimeEnvironment, params: DeployParam
       args: constructorArgs,
     });
 
-    // Save `alias` deployment file with proxy and implementation abi
+    // Save `alias` deployment file with implementation deploy details but has proxy address as deployed address
     await save(alias, {
-      ...proxyDeployment,
-      abi: mergeABIs([proxyDeployment.abi, implementationAbi], {
-        check: false,
-        skipSupportsInterface: true,
-      }),
-      args: constructorArgs,
+      ...implementationDeployment,
+      address: proxyDeployment.address,
+      implementation: implementationAddress,
     });
 
     if (!["hardhat", "localhost"].includes(hre.network.name)) {
@@ -107,8 +109,15 @@ export const deploy = async (hre: HardhatRuntimeEnvironment, params: DeployParam
 
   // Update deployment file if needed
   if (proxyDeployment.implementation != implementationAddress) {
+    // update implementation address in proxy deployment
     await save(proxyAlias, {
       ...proxyDeployment,
+      implementation: implementationAddress,
+    });
+    // update implementation deployment
+    await save(alias, {
+      ...implementationDeployment,
+      address: proxyDeployment.address,
       implementation: implementationAddress,
     });
   }
@@ -116,7 +125,7 @@ export const deploy = async (hre: HardhatRuntimeEnvironment, params: DeployParam
   const proxyImplementationAddress = await getImplementation(hre, proxyDeployment.address);
 
   // Upgrade proxy if needed
-  if (oldImplDeployment && proxyImplementationAddress != implementationAddress) {
+  if (oldImplDeployment && proxyImplementationAddress != hre.ethers.getAddress(implementationAddress)) {
     const governor = await read(alias, "governor");
     const executeFunction = () =>
       execute(alias, { from: governor, log: true }, "upgradeToAndCall", implementationAddress, "0x");

@@ -142,7 +142,7 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
     function tvl() external view virtual returns (uint256);
 
     function VERSION() external pure virtual override returns (string memory) {
-        return "5.5.0";
+        return "6.0.0";
     }
 
     /**

@@ -1,0 +1,37 @@
+name: Morpho
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/morpho.yml"
+      - "contracts/strategies/Strategy.sol"
+      - "contracts/strategies/morpho/*.sol"
+      - "test/morpho/*.sol"
+
+jobs:
+  check:
+    name: Foundry project
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Use nvmrc
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+
+      - name: Run npm install
+        run: npm i
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - name: Run tests
+        run: forge t --mc Morpho -vvv
+        env:
+          MAINNET_FORK_NODE_URL: ${{ secrets.MAINNET_FORK_NODE_URL }}
+          OPTIMISM_FORK_NODE_URL: ${{ secrets.OPTIMISM_FORK_NODE_URL }}
+          BASE_FORK_NODE_URL: ${{ secrets.BASE_FORK_NODE_URL }}

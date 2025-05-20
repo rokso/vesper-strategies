@@ -87,9 +87,13 @@ export const deployAndConfigureStrategy = async (deployParams: DeployParams, con
   const deployed = await deploy(hre, deployParams);
   const strategyAddress = deployed.address;
 
-  // call approveToken
-  // if strategy is not active meaning it is new deployment and hence we should call approveToken
-  if (!(await read(alias, "isActive"))) {
+  // Approve tokens
+  const vesperPool = await read(alias, "pool");
+  const collateralTokenAddress = await read(alias, "collateralToken");
+  const collateralToken = await hre.ethers.getContractAt("IERC20", collateralTokenAddress);
+  const allowance = await collateralToken.allowance(strategyAddress, vesperPool);
+  // Allowance of collateralToken to pool is one of the key approval, so if it is zero then execute approveToken.
+  if (allowance === 0n) {
     await execute(alias, { from: deployer, log: true }, "approveToken", hre.ethers.MaxUint256);
   }
 

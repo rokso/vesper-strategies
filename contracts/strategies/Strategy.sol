@@ -22,6 +22,8 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
     error FeeCollectorNotSet();
     error InvalidStrategy();
     error NotEnoughAmountOut();
+    error NotEnoughProfit(uint256);
+    error TooMuchLoss(uint256);
     error Unauthorized();
 
     event UpdatedFeeCollector(address oldFeeCollector, address newFeeCollector);
@@ -140,7 +142,7 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
     function tvl() external view virtual returns (uint256);
 
     function VERSION() external pure virtual override returns (string memory) {
-        return "5.5.0";
+        return "6.0.0";
     }
 
     /**
@@ -166,12 +168,19 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
      * @notice OnlyKeeper: Rebalance profit, loss and investment of this strategy.
      *  Calculate profit, loss and payback of this strategy and realize profit/loss and
      *  withdraw fund for payback, if any, and submit this report to pool.
+     * @param _minProfit Minimum profit expected from this call.
+     * @param _maxLoss Maximum accepted loss for this call.
      * @return _profit Realized profit in collateral.
      * @return _loss Realized loss, if any, in collateral.
      * @return _payback If strategy has any excess debt, we have to liquidate asset to payback excess debt.
      */
-    function rebalance() external onlyKeeper returns (uint256 _profit, uint256 _loss, uint256 _payback) {
-        return _rebalance();
+    function rebalance(
+        uint256 _minProfit,
+        uint256 _maxLoss
+    ) external onlyKeeper returns (uint256 _profit, uint256 _loss, uint256 _payback) {
+        (_profit, _loss, _payback) = _rebalance();
+        if (_profit < _minProfit) revert NotEnoughProfit(_profit);
+        if (_loss > _maxLoss) revert TooMuchLoss(_loss);
     }
 
     /**

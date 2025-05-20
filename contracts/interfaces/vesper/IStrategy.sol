@@ -5,7 +5,10 @@ pragma solidity 0.8.25;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IStrategy {
-    function rebalance() external returns (uint256 _profit, uint256 _loss, uint256 _payback);
+    function rebalance(
+        uint256 _minProfit,
+        uint256 _maxLoss
+    ) external returns (uint256 _profit, uint256 _loss, uint256 _payback);
 
     function sweep(address _fromToken) external;
 

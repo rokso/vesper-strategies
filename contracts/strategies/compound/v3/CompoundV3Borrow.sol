@@ -8,7 +8,6 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {Strategy} from "../../Strategy.sol";
 import {IVesperPool} from "../../../interfaces/vesper/IVesperPool.sol";
-import {ISwapper} from "../../../interfaces/swapper/ISwapper.sol";
 import {IComet} from "../../../interfaces/compound/IComet.sol";
 
 // solhint-disable no-empty-blocks
@@ -21,7 +20,9 @@ abstract contract CompoundV3Borrow is Strategy {
 
     error InvalidInput();
     error InvalidMaxBorrowLimit();
+    error InvalidSlippage();
     error MaxShouldBeHigherThanMin();
+    error PriceError();
 
     event UpdatedBorrowLimit(
         uint256 previousMinBorrowLimit,
@@ -29,6 +30,7 @@ abstract contract CompoundV3Borrow is Strategy {
         uint256 previousMaxBorrowLimit,
         uint256 newMaxBorrowLimit
     );
+    event UpdatedSlippage(uint256 previousSlippage, uint256 newSlippage);
 
     uint256 internal constant MAX_BPS = 10_000; //100%
     /// @custom:storage-location erc7201:vesper.storage.Strategy.CompoundV3Borrow
@@ -37,6 +39,7 @@ abstract contract CompoundV3Borrow is Strategy {
         address _borrowToken;
         uint256 _minBorrowLimit;
         uint256 _maxBorrowLimit;
+        uint256 _slippage;
     }
 
     bytes32 private constant CompoundV3BorrowStorageLocation =
@@ -63,8 +66,10 @@ abstract contract CompoundV3Borrow is Strategy {
         CompoundV3BorrowStorage storage $ = _getCompoundV3BorrowStorage();
         $._comet = IComet(comet_);
         $._borrowToken = borrowToken_;
+
         $._minBorrowLimit = 7_000; // 70% of actual collateral factor of protocol
         $._maxBorrowLimit = 8_500; // 85% of actual collateral factor of protocol
+        $._slippage = 300; // 3%
     }
 
     function borrowToken() public view returns (address) {
@@ -87,6 +92,10 @@ abstract contract CompoundV3Borrow is Strategy {
         return _getCompoundV3BorrowStorage()._minBorrowLimit;
     }
 
+    function slippage() public view returns (uint256) {
+        return _getCompoundV3BorrowStorage()._slippage;
+    }
+
     /// @notice Returns total collateral locked in the strategy
     function tvl() external view override returns (uint256) {
         IERC20 _collateralToken = collateralToken();
@@ -96,7 +105,7 @@ abstract contract CompoundV3Borrow is Strategy {
     }
 
     /// @dev Hook that executes after collateral borrow.
-    function _afterBorrowY(uint256 amount_) internal virtual {}
+    function _afterBorrowY(uint256 amount_) internal virtual;
 
     /// @notice Approve all required tokens
     function _approveToken(uint256 amount_) internal virtual override {
@@ -211,13 +220,35 @@ abstract contract CompoundV3Borrow is Strategy {
         return _totalSupply > _totalBorrow ? _totalSupply - _totalBorrow : 0;
     }
 
-    function _getYTokensInProtocol() internal view virtual returns (uint256) {}
+    function _getYTokensInProtocol() internal view virtual returns (uint256);
 
     /// @dev Deposit collateral aka X in Compound. Override to handle ETH
     function _mintX(uint256 amount_) internal {
         if (amount_ > 0) {
             comet().supply(address(collateralToken()), amount_);
         }
+    }
+
+    function _getPriceFeed(CompoundV3BorrowStorage memory s, address token_) internal view returns (address) {
+        return
+            token_ == s._borrowToken ? s._comet.baseTokenPriceFeed() : s._comet.getAssetInfoByAddress(token_).priceFeed;
+    }
+
+    /**
+     * @dev Get quote for token price in terms of other token.
+     * @param tokenIn_ tokenIn
+     * @param tokenOut_ tokenOut
+     * @param amountIn_ amount of tokenIn_
+     * @return amountOut of tokenOut_ for amountIn_ of tokenIn_
+     */
+    function _quote(address tokenIn_, address tokenOut_, uint256 amountIn_) internal view virtual returns (uint256) {
+        CompoundV3BorrowStorage memory s = _getCompoundV3BorrowStorage();
+        uint256 _tokenInPrice = s._comet.getPrice(_getPriceFeed(s, tokenIn_));
+        uint256 _tokenOutPrice = s._comet.getPrice(_getPriceFeed(s, tokenOut_));
+
+        if (_tokenInPrice == 0 || _tokenOutPrice == 0) revert PriceError();
+        return ((_tokenInPrice * amountIn_ * (10 ** IERC20Metadata(tokenOut_).decimals())) /
+            (10 ** IERC20Metadata(tokenIn_).decimals() * _tokenOutPrice));
     }
 
     function _rebalance() internal override returns (uint256 _profit, uint256 _loss, uint256 _payback) {
@@ -238,15 +269,9 @@ abstract contract CompoundV3Borrow is Strategy {
             if (_yTokensBorrowed > _totalYTokens) {
                 _swapToBorrowToken(_yTokensBorrowed - _totalYTokens);
             } else {
-                // When _yTokensInProtocol exceeds _yTokensBorrowed from Compound
-                // then we have profit from investing borrow tokens. _yTokensHere is profit.
-                if (_yTokensInProtocol > _yTokensBorrowed) {
-                    _withdrawY(_yTokensInProtocol - _yTokensBorrowed);
-                    _yTokensHere = IERC20(_borrowToken).balanceOf(address(this));
-                }
-                if (_yTokensHere > 0) {
-                    _trySwapExactInput(_borrowToken, address(_collateralToken), _yTokensHere);
-                }
+                // When _totalYTokens exceeds _yTokensBorrowed from Compound
+                // then we have profit from investing borrow tokens.
+                _rebalanceBorrow(_totalYTokens - _yTokensBorrowed);
             }
         }
 
@@ -274,6 +299,28 @@ abstract contract CompoundV3Borrow is Strategy {
         _pool.reportEarning(_profit, _loss, _payback);
 
         _deposit();
+    }
+
+    /// @dev excessYTokens_ are profit, swap these for collateral.
+    function _rebalanceBorrow(uint256 excessYTokens_) internal {
+        address _borrowToken = borrowToken();
+        address _collateralToken = address(collateralToken());
+
+        if (excessYTokens_ > 0) {
+            uint256 _yTokensHere = IERC20(_borrowToken).balanceOf(address(this));
+            if (excessYTokens_ > _yTokensHere) {
+                _withdrawY(excessYTokens_ - _yTokensHere);
+                _yTokensHere = IERC20(_borrowToken).balanceOf(address(this));
+            }
+            if (_yTokensHere > 0) {
+                // Swap minimum of excessYTokens_ and _yTokensHere for collateral
+                uint256 _amountIn = Math.min(excessYTokens_, _yTokensHere);
+                // Get quote for _amountIn of borrowToken to collateralToken
+                uint256 _expectedAmountOut = _quote(_borrowToken, _collateralToken, _amountIn);
+                uint256 _minAmountOut = (_expectedAmountOut * (MAX_BPS - slippage())) / MAX_BPS;
+                swapper().swapExactInput(_borrowToken, _collateralToken, _amountIn, _minAmountOut, address(this));
+            }
+        }
     }
 
     /**
@@ -310,24 +357,24 @@ abstract contract CompoundV3Borrow is Strategy {
     }
 
     /**
-     * @dev Swap given token to borrowToken
-     * @param shortOnBorrow_ Expected output of this swap
+     * @dev Swap collateral to borrowToken
+     * @param amountOut_ Expected output of this swap
      */
-    function _swapToBorrowToken(uint256 shortOnBorrow_) internal {
-        // Looking for _amountIn using fixed output amount
+    function _swapToBorrowToken(uint256 amountOut_) internal {
         IERC20 _collateralToken = collateralToken();
         address _borrowToken = borrowToken();
-        ISwapper _swapper = swapper();
-        uint256 _amountIn = _swapper.getAmountIn(address(_collateralToken), _borrowToken, shortOnBorrow_);
-        if (_amountIn > 0) {
+        // Looking for _amountIn using fixed output amount
+        // Get quote for _amountOut of borrowToken to collateralToken
+        uint256 _expectedAmountIn = _quote(_borrowToken, address(_collateralToken), amountOut_);
+        if (_expectedAmountIn > 0) {
+            uint256 _maxAmountIn = (_expectedAmountIn * (MAX_BPS + slippage())) / MAX_BPS;
             uint256 _collateralHere = _collateralToken.balanceOf(address(this));
-            // If we do not have enough _from token to get expected output, either get
-            // some _from token or adjust expected output.
-            if (_amountIn > _collateralHere) {
-                // Redeem some collateral, so that we have enough collateral to get expected output
-                comet().withdraw(address(_collateralToken), _amountIn - _collateralHere);
+            // If we do not have enough collateral, withdraw from Compound.
+            if (_maxAmountIn > _collateralHere) {
+                // Withdraw some collateral, so that we have enough collateral to get expected output
+                comet().withdraw(address(_collateralToken), _maxAmountIn - _collateralHere);
             }
-            _swapper.swapExactOutput(address(_collateralToken), _borrowToken, shortOnBorrow_, _amountIn, address(this));
+            swapper().swapExactOutput(address(_collateralToken), _borrowToken, amountOut_, _maxAmountIn, address(this));
         }
     }
 
@@ -348,49 +395,11 @@ abstract contract CompoundV3Borrow is Strategy {
         _comet.withdraw(_collateralToken, _withdrawAmount);
     }
 
-    function _withdrawY(uint256 _amount) internal virtual {}
+    function _withdrawY(uint256 _amount) internal virtual;
 
     /************************************************************************************************
      *                          Governor/admin/keeper function                                      *
      ***********************************************************************************************/
-    /**
-     * @notice Recover extra borrow tokens from strategy
-     * @dev If we get liquidation in Compound, we will have borrowToken sitting in strategy.
-     * This function allows to recover idle borrow token amount.
-     * @param amountToRecover_ Amount of borrow token we want to recover in 1 call.
-     *      Set it 0 to recover all available borrow tokens
-     */
-    function recoverBorrowToken(uint256 amountToRecover_) external onlyKeeper {
-        IERC20 _collateralToken = collateralToken();
-        address _borrowToken = borrowToken();
-        uint256 _borrowBalanceHere = IERC20(_borrowToken).balanceOf(address(this));
-        uint256 _borrowInCompound = comet().borrowBalanceOf(address(this));
-
-        if (_borrowBalanceHere > _borrowInCompound) {
-            uint256 _extraBorrowBalance = _borrowBalanceHere - _borrowInCompound;
-            uint256 _recoveryAmount = (amountToRecover_ > 0 && _extraBorrowBalance > amountToRecover_)
-                ? amountToRecover_
-                : _extraBorrowBalance;
-            // Do swap and transfer
-            uint256 _amountOut = _trySwapExactInput(_borrowToken, address(_collateralToken), _recoveryAmount);
-            if (_amountOut > 0) {
-                _collateralToken.safeTransfer(pool(), _amountOut);
-            }
-        }
-    }
-
-    /**
-     * @notice Repay all borrow amount and set min borrow limit to 0.
-     * @dev This action usually done when loss is detected in strategy.
-     * @dev 0 borrow limit make sure that any future rebalance do not borrow again.
-     */
-    function repayAll() external onlyKeeper {
-        CompoundV3BorrowStorage storage $ = _getCompoundV3BorrowStorage();
-        _repay($._comet.borrowBalanceOf(address(this)));
-        $._minBorrowLimit = 0;
-        $._maxBorrowLimit = 0;
-    }
-
     /**
      * @notice Update upper and lower borrow limit. Usually maxBorrowLimit < 100% of actual collateral factor of protocol.
      * @dev It is possible to set 0 as _minBorrowLimit to not borrow anything
@@ -409,5 +418,12 @@ abstract contract CompoundV3Borrow is Strategy {
         // To avoid liquidation due to price variations maxBorrowLimit is a collateral factor that is less than actual collateral factor of protocol
         $._minBorrowLimit = minBorrowLimit_;
         $._maxBorrowLimit = maxBorrowLimit_;
+    }
+
+    function updateSlippage(uint256 newSlippage_) external onlyGovernor {
+        if (newSlippage_ > MAX_BPS) revert InvalidSlippage();
+        CompoundV3BorrowStorage storage $ = _getCompoundV3BorrowStorage();
+        emit UpdatedSlippage($._slippage, newSlippage_);
+        $._slippage = newSlippage_;
     }
 }

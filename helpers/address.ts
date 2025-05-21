@@ -51,6 +51,8 @@ const A = {
     Fraxlend: {
       V1: {
         WBTC_FRAX: "0x32467a5fc2d72D21E8DCe990906547A2b012f382",
+      },
+      V3: {
         sfrxETH_FRAX: "0x78bB3aEC3d855431bd9289fD98dA13F9ebB7ef15",
       },
     },

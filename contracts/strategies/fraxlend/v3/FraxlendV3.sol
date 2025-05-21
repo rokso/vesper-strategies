@@ -3,8 +3,8 @@
 pragma solidity 0.8.25;
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {IFraxlendPairV3} from "../../interfaces/fraxlend/IFraxlendPairV3.sol";
-import {Fraxlend} from "./Fraxlend.sol";
+import {IFraxlendPairV3} from "../../../interfaces/fraxlend/IFraxlendPairV3.sol";
+import {Fraxlend} from "../Fraxlend.sol";
 
 /// @title This strategy will deposit FRAX as collateral token in Fraxlend and earn interest.
 contract FraxlendV3 is Fraxlend {

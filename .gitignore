@@ -28,3 +28,7 @@ typechain-types
 
 # Lerna
 lerna-debug*
+
+# Foundry
+cache_forge
+out

@@ -7,6 +7,7 @@ import "hardhat-deploy-ethers";
 import "dotenv/config";
 import "./tasks/create-release";
 import "./tasks/impersonate";
+import "@nomicfoundation/hardhat-foundry";
 
 const localhost = process.env.FORK_NODE_URL || "http://localhost:8545";
 const mainnetNodeUrl = process.env.MAINNET_NODE_URL || "";

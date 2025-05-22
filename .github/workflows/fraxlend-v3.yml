@@ -1,12 +1,12 @@
-name: Fraxlend V1
+name: Fraxlend V3
 on:
   pull_request:
     paths:
-      - ".github/workflows/fraxlend-v1.yml"
+      - ".github/workflows/fraxlend-v3.yml"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/fraxlend/*.sol"
-      - "contracts/strategies/fraxlend/v1/*.sol"
-      - "test/fraxlend/v1/*.sol"
+      - "contracts/strategies/fraxlend/v3/*.sol"
+      - "test/fraxlend/v3/*.sol"
 
 jobs:
   check:
@@ -31,7 +31,7 @@ jobs:
           version: stable
 
       - name: Run tests
-        run: forge t --mc FraxlendV1 -vvv
+        run: forge t --mc FraxlendV3 -vvv
         env:
           MAINNET_FORK_NODE_URL: ${{ secrets.MAINNET_FORK_NODE_URL }}
           OPTIMISM_FORK_NODE_URL: ${{ secrets.OPTIMISM_FORK_NODE_URL }}

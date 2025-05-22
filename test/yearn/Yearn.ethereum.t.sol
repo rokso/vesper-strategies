@@ -12,10 +12,11 @@ import {deinitialize} from "test/helpers/Functions.sol";
 contract Yearn_Ethereum_Test is Strategy_Withdraw_Test, Strategy_Rebalance_Test {
     constructor() {
         MAX_DUST_LEFT_IN_PROTOCOL_AFTER_WITHDRAW_ABS = 1000;
+        MAX_DEPOSIT_SLIPPAGE_REL = 0.000000000000001e18;
     }
 
     function _setUp() internal override {
-        vm.createSelectFork({urlOrAlias: "ethereum", blockNumber: 22525824});
+        vm.createSelectFork({urlOrAlias: "ethereum"});
 
         strategy = new Yearn();
         deinitialize(address(strategy));
@@ -40,7 +41,6 @@ contract Yearn_Ethereum_Test is Strategy_Withdraw_Test, Strategy_Rebalance_Test 
 
         vm.startPrank(address(strategy));
         deal(address(token()), address(strategy), token().balanceOf(address(strategy)) + profit);
-        token().approve(address(_yToken), profit);
         _yToken.deposit(profit);
         vm.stopPrank();
     }

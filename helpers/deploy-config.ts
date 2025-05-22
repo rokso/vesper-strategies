@@ -13,6 +13,7 @@ export const EULER_V2 = "EulerV2";
 export const EXTRA_FINANCE = "ExtraFinance";
 export const FRAXLEND_V1 = "FraxlendV1";
 export const FRAXLEND_V1_VESPER_BORROW = "FraxlendV1VesperBorrow";
+export const FRAXLEND_V3 = "FraxlendV3";
 export const MORPHO_VAULT = "MorphoVault";
 export const SOMMELIER = "Sommelier";
 export const STARGATE_V2 = "StargateV2";

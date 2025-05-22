@@ -6,10 +6,10 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {Strategy} from "../Strategy.sol";
-import {AggregatorV3Interface} from "../../interfaces/chainlink/AggregatorV3Interface.sol";
-import {IVesperPool} from "../../interfaces/vesper/IVesperPool.sol";
-import {IFraxlendPair} from "../../interfaces/fraxlend/IFraxlendPair.sol";
+import {Strategy} from "../../Strategy.sol";
+import {AggregatorV3Interface} from "../../../interfaces/chainlink/AggregatorV3Interface.sol";
+import {IVesperPool} from "../../../interfaces/vesper/IVesperPool.sol";
+import {IFraxlendPair} from "../../../interfaces/fraxlend/IFraxlendPair.sol";
 
 // solhint-disable var-name-mixedcase
 
@@ -223,6 +223,9 @@ abstract contract FraxlendV1Borrow is Strategy {
             fraxlendPair().borrowAsset(_borrowAmount, _collateralBalance, address(this));
             // Deposit all borrow token, FRAX, we have.
             _afterBorrow(IERC20(borrowToken()).balanceOf(address(this)));
+        } else if (_collateralBalance > 0) {
+            // If we are not borrowing or repaying, deposit all collateral token.
+            fraxlendPair().addCollateral(_collateralBalance, address(this));
         }
     }
 

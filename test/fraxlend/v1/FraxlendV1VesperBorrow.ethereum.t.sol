@@ -3,18 +3,14 @@ pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
 import {Strategy} from "contracts/strategies/Strategy.sol";
-import {IFraxlendPair} from "contracts/strategies/fraxlend/FraxlendV1.sol";
-import {FraxlendV1VesperBorrow} from "contracts/strategies/fraxlend/FraxlendV1VesperBorrow.sol";
+import {IFraxlendPair} from "contracts/strategies/fraxlend/v1/FraxlendV1.sol";
+import {FraxlendV1VesperBorrow} from "contracts/strategies/fraxlend/v1/FraxlendV1VesperBorrow.sol";
 import {Strategy_Withdraw_Test} from "test/Strategy.withdraw.t.sol";
 import {Strategy_Rebalance_Test} from "test/Strategy.rebalance.t.sol";
 import {SWAPPER, vaWBTC, vaFRAX, FRAX, FRAXLEND_V1_WBTC_FRAX} from "test/helpers/Address.ethereum.sol";
 import {deinitialize} from "test/helpers/Functions.sol";
 
 contract FraxlendV1VesperBorrow_Ethereum_Test is Strategy_Withdraw_Test, Strategy_Rebalance_Test {
-    constructor() {
-        // MAX_DEPOSIT_SLIPPAGE_REL = 0.0000001e18;
-    }
-
     function _setUp() internal override {
         vm.createSelectFork({urlOrAlias: "ethereum"});
 

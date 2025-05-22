@@ -78,15 +78,15 @@ contract AaveV3VesperBorrowForStETH is AaveV3VesperBorrow {
         return IERC20(address(wstETH()));
     }
 
-    function _unwrap(uint256 wrappedAmount_) internal override returns (uint256) {
+    function _unwrap(uint256 wrappedAmount_) internal override returns (uint256 _unwrappedAmount) {
         if (wrappedAmount_ > 0) {
-            return wstETH().unwrap(wrappedAmount_);
+            _unwrappedAmount = wstETH().unwrap(wrappedAmount_);
         }
     }
 
-    function _wrap(uint256 unwrappedAmount_) internal override returns (uint256) {
+    function _wrap(uint256 unwrappedAmount_) internal override returns (uint256 _wrappedAmount) {
         if (unwrappedAmount_ > 0) {
-            return wstETH().wrap(unwrappedAmount_);
+            _wrappedAmount = wstETH().wrap(unwrappedAmount_);
         }
     }
 }

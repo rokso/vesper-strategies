@@ -23,7 +23,7 @@ contract FraxlendV1VesperBorrow is FraxlendV1Borrow {
         keccak256(abi.encode(uint256(keccak256("vesper.storage.Strategy.FraxlendV1VesperBorrow")) - 1)) &
             ~bytes32(uint256(0xff));
 
-    function _getFraxlendV1VesperBorrowStorage() internal pure returns (FraxlendV1VesperBorrowStorage storage $) {
+    function _getFraxlendV1VesperBorrowStorage() private pure returns (FraxlendV1VesperBorrowStorage storage $) {
         bytes32 _location = FraxlendV1VesperBorrowStorageLocation;
         assembly {
             $.slot := _location
@@ -53,7 +53,7 @@ contract FraxlendV1VesperBorrow is FraxlendV1Borrow {
     }
 
     /// @notice After borrowing borrow tokens, deposit tokens to Vesper Pool
-    function _afterBorrow(uint256 amount_) internal override {
+    function _depositBorrowToken(uint256 amount_) internal override {
         vPool().deposit(amount_);
     }
 
@@ -63,13 +63,16 @@ contract FraxlendV1VesperBorrow is FraxlendV1Borrow {
         IERC20(borrowToken()).forceApprove(address(_vPool), amount_);
     }
 
-    function _getInvestedBorrowTokens() internal view override returns (uint256) {
+    /// @dev borrowToken balance here + borrowToken balance deposited in Vesper Pool
+    function _getTotalBorrowBalance() internal view override returns (uint256) {
         IVesperPool _vPool = vPool();
-        return (_vPool.pricePerShare() * _vPool.balanceOf(address(this))) / 1e18;
+        return
+            IERC20(borrowToken()).balanceOf(address(this)) +
+            ((_vPool.pricePerShare() * _vPool.balanceOf(address(this))) / 1e18);
     }
 
     /// @notice Withdraw _shares proportional to collateral _amount from vPool
-    function _withdrawBorrowTokens(uint256 amount_) internal override {
+    function _withdrawBorrowToken(uint256 amount_) internal override {
         IVesperPool _vPool = vPool();
         uint256 _pricePerShare = _vPool.pricePerShare();
         uint256 _shares = (amount_ * 1e18) / _pricePerShare;

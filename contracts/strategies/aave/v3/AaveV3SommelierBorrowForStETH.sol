@@ -53,7 +53,7 @@ contract AaveV3SommelierBorrowForStETH is AaveV3SommelierBorrow {
     }
 
     /// @notice Returns total collateral locked in the strategy
-    function tvl() external view  override returns (uint256) {
+    function tvl() external view override returns (uint256) {
         // receiptToken is aToken. aToken is 1:1 of collateral token
         return
             IERC20(receiptToken()).balanceOf(address(this)) +
@@ -61,7 +61,7 @@ contract AaveV3SommelierBorrowForStETH is AaveV3SommelierBorrow {
             _calculateWrapped(collateralToken().balanceOf(address(this)));
     }
 
-    function _approveToken(uint256 amount_) internal  override {
+    function _approveToken(uint256 amount_) internal override {
         super._approveToken(amount_);
         collateralToken().forceApprove(address(wrappedCollateral()), amount_);
     }
@@ -74,24 +74,19 @@ contract AaveV3SommelierBorrowForStETH is AaveV3SommelierBorrow {
         return wstETH().getWstETHByStETH(unwrappedAmount_);
     }
 
-    function _getCollateralHere() internal  override returns (uint256) {
-        uint256 _wrapped = wrappedCollateral().balanceOf(address(this));
-        if (_wrapped > 0) {
-            _unwrap(_wrapped);
-        }
-        // Return unwrapped balance
-        return collateralToken().balanceOf(address(this));
-    }
-
     function _getWrappedToken(IERC20) internal view override returns (IERC20) {
         return IERC20(address(wstETH()));
     }
 
     function _unwrap(uint256 wrappedAmount_) internal override returns (uint256) {
-        return wstETH().unwrap(wrappedAmount_);
+        if (wrappedAmount_ > 0) {
+            return wstETH().unwrap(wrappedAmount_);
+        }
     }
 
     function _wrap(uint256 unwrappedAmount_) internal override returns (uint256) {
-        return wstETH().wrap(unwrappedAmount_);
+        if (unwrappedAmount_ > 0) {
+            return wstETH().wrap(unwrappedAmount_);
+        }
     }
 }

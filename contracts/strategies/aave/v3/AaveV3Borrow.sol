@@ -7,11 +7,9 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IAToken} from "../../../interfaces/aave/IAToken.sol";
-import {IIncentivesController} from "../../../interfaces/aave/IIncentivesController.sol";
 import {ILendingPool} from "../../../interfaces/aave/ILendingPool.sol";
 import {IAaveOracle} from "../../../interfaces/aave/IAaveOracle.sol";
 import {IPoolAddressesProvider} from "../../../interfaces/aave/IPoolAddressesProvider.sol";
-import {IProtocolDataProvider} from "../../../interfaces/aave/IProtocolDataProvider.sol";
 import {IVesperPool} from "../../../interfaces/vesper/IVesperPool.sol";
 import {Strategy} from "../../Strategy.sol";
 import {AaveV3Incentive} from "./AaveV3Incentive.sol";
@@ -136,9 +134,6 @@ abstract contract AaveV3Borrow is Strategy {
         return _getAaveV3BorrowStorage()._wrappedCollateral;
     }
 
-    /// @notice After borrowing Y Hook
-    function _afterBorrowY(uint256 amount_) internal virtual;
-
     /// @notice Approve all required tokens
     function _approveToken(uint256 amount_) internal virtual override {
         super._approveToken(amount_);
@@ -152,8 +147,22 @@ abstract contract AaveV3Borrow is Strategy {
         _borrowToken.forceApprove(_swapper, amount_);
     }
 
-    /// @notice Before repaying Y Hook
-    function _beforeRepayY(uint256 amount_) internal virtual;
+    /// @dev Borrow tokens from Aave. Deposit borrowed tokens into end protocol, if any.
+    function _borrow(uint256 borrowAmount_, ILendingPool lendingPool_) private {
+        address _borrowToken = borrowToken();
+        //
+        // 1 Borrow tokens from Aave
+        //
+        // using 2 for variable rate borrow, 0 for referralCode
+        lendingPool_.borrow(_borrowToken, borrowAmount_, 2, 0, address(this));
+        //
+        // 2 Deposit borrowed tokens into end protocol.
+        //
+        uint256 _borrowTokenBalance = IERC20(_borrowToken).balanceOf(address(this));
+        if (_borrowTokenBalance > 0) {
+            _depositBorrowToken(_borrowTokenBalance);
+        }
+    }
 
     /**
      * @notice Calculate borrow and repay amount based on current collateral and new deposit/withdraw amount.
@@ -237,11 +246,55 @@ abstract contract AaveV3Borrow is Strategy {
         AaveV3Incentive._claimRewards(receiptToken());
     }
 
-    function _depositToAave(uint256 amount_, ILendingPool aaveLendingPool_) internal {
+    /// @dev Overall this function handle following
+    /// 1. Deposit collateral tokens.
+    /// 2. Check if position needs to replay or borrow.
+    /// 3. Repay borrow tokens if needed.
+    /// 4. Borrow more tokens if needed.
+    function _handleCollateral(ILendingPool lendingPool_, uint256 collateralAmount_) private {
+        //
+        // 1. Deposit collateral tokens.
+        //
+        // `collateralAmount_` is unwrapped balance if pool supports unwrap token eg stETH
+        _depositCollateral(collateralAmount_, lendingPool_);
+
+        //
+        // 2. Check if position needs to repay or borrow more
+        //
+
+        // There are scenarios when we want to call _calculateBorrowPosition and act on it.
+        // i. Strategy got some collateral from pool which will allow strategy to borrow more.
+        // ii. Collateral and/or borrow token price is changed which leads to repay or borrow.
+        // iii. BorrowLimits are updated.
+        // In some edge scenarios, below call is redundant but keeping it as is for simplicity.
+        (uint256 _borrowAmount, uint256 _repayAmount) = _calculateBorrowPosition(
+            0,
+            0,
+            vdToken().balanceOf(address(this)),
+            IERC20(receiptToken()).balanceOf(address(this))
+        );
+
+        //
+        // 3. Repay borrow token to maintain safe position
+        //
+        if (_repayAmount > 0) {
+            _repay(_repayAmount, lendingPool_);
+        } else if (_borrowAmount > 0) {
+            //
+            // 4. Borrow tokens from protocol
+            //
+            _borrow(_borrowAmount, lendingPool_);
+        }
+    }
+
+    /// @dev Deposit borrowed token.
+    function _depositBorrowToken(uint256 amount_) internal virtual;
+
+    function _depositCollateral(uint256 amount_, ILendingPool lendingPool_) internal {
         uint256 _wrappedAmount = _wrap(amount_);
         if (_wrappedAmount > 0) {
             // solhint-disable-next-line no-empty-blocks
-            try aaveLendingPool_.supply(address(wrappedCollateral()), _wrappedAmount, address(this), 0) {} catch Error(
+            try lendingPool_.supply(address(wrappedCollateral()), _wrappedAmount, address(this), 0) {} catch Error(
                 string memory _reason
             ) {
                 // Aave uses liquidityIndex and some other indexes as needed to normalize input.
@@ -253,12 +306,8 @@ abstract contract AaveV3Borrow is Strategy {
         }
     }
 
-    function _getCollateralHere() internal virtual returns (uint256) {
-        return collateralToken().balanceOf(address(this));
-    }
-
-    /// @notice Borrowed Y balance deposited here or elsewhere hook
-    function _getInvestedBorrowBalance() internal view virtual returns (uint256) {
+    /// @dev Returns borrowed balance here and deposited into end protocol if any.
+    function _getTotalBorrowBalance() internal view virtual returns (uint256) {
         return IERC20(borrowToken()).balanceOf(address(this));
     }
 
@@ -293,18 +342,19 @@ abstract contract AaveV3Borrow is Strategy {
         // NOTE:: Pool has unwrapped as collateral and any state is also unwrapped amount
         uint256 _excessDebt = _pool.excessDebt(address(this));
         uint256 _borrowed = vdToken().balanceOf(address(this));
-        uint256 _investedBorrowBalance = _getInvestedBorrowBalance();
+        uint256 _totalBorrowBalance = _getTotalBorrowBalance();
         ILendingPool _lendingPool = aavePoolAddressesProvider().getPool();
 
         // _borrow increases every block. Convert collateral to borrowToken.
-        if (_borrowed > _investedBorrowBalance) {
+        if (_borrowed > _totalBorrowBalance) {
             // Loss making scenario. Convert collateral to borrowToken to repay loss
-            _swapToBorrowToken(_borrowed - _investedBorrowBalance, _lendingPool);
+            _swapToBorrowToken(_borrowed - _totalBorrowBalance, _lendingPool);
         } else {
             // Swap extra borrow token to collateral token and report profit
-            _rebalanceBorrow(_investedBorrowBalance - _borrowed);
+            _rebalanceBorrow(_totalBorrowBalance - _borrowed);
         }
-        uint256 _collateralHere = _getCollateralHere();
+        // unwrap wrapped collateral and return collateral balance here.
+        uint256 _collateralHere = _unwrap(wrappedCollateral().balanceOf(address(this)));
         uint256 _supplied = IERC20(receiptToken()).balanceOf(address(this));
         uint256 _unwrappedSupplied = _calculateUnwrapped(_supplied);
         uint256 _totalCollateral = _unwrappedSupplied + _collateralHere;
@@ -329,35 +379,8 @@ abstract contract AaveV3Borrow is Strategy {
         _profit = _collateralHere > _payback ? Math.min((_collateralHere - _payback), _profit) : 0;
 
         _pool.reportEarning(_profit, _loss, _payback);
-        // This is unwrapped balance if pool supports unwrap token eg stETH
-        uint256 _newSupply = collateralToken().balanceOf(address(this));
-        if (_newSupply > 0) {
-            _depositToAave(_newSupply, _lendingPool);
-        }
-
-        // There are scenarios when we want to call _calculateBorrowPosition and act on it.
-        // 1. Strategy got some collateral from pool which will allow strategy to borrow more.
-        // 2. Collateral and/or borrow token price is changed which leads to repay or borrow.
-        // 3. BorrowLimits are updated.
-        // In some edge scenarios, below call is redundant but keeping it as is for simplicity.
-        (uint256 _borrowAmount, uint256 _repayAmount) = _calculateBorrowPosition(
-            0,
-            0,
-            vdToken().balanceOf(address(this)),
-            IERC20(receiptToken()).balanceOf(address(this))
-        );
-        address _borrowToken = borrowToken();
-        if (_repayAmount > 0) {
-            // Repay _borrowAmount to maintain safe position
-            _repayY(_repayAmount, _lendingPool);
-        } else if (_borrowAmount > 0) {
-            // 2 for variable rate borrow, 0 for referralCode
-            _lendingPool.borrow(_borrowToken, _borrowAmount, 2, 0, address(this));
-        }
-        uint256 _borrowTokenBalance = IERC20(_borrowToken).balanceOf(address(this));
-        if (_borrowTokenBalance > 0) {
-            _afterBorrowY(_borrowTokenBalance);
-        }
+        // Handle any collateral sent by the Vesper pool.
+        _handleCollateral(_lendingPool, collateralToken().balanceOf(address(this)));
     }
 
     /// @notice Swap earned borrow token for collateral and report it as profits
@@ -367,7 +390,7 @@ abstract contract AaveV3Borrow is Strategy {
         if (excessBorrow_ > 0) {
             uint256 _borrowedHere = IERC20(_borrowToken).balanceOf(address(this));
             if (excessBorrow_ > _borrowedHere) {
-                _withdrawY(excessBorrow_ - _borrowedHere);
+                _withdrawBorrowToken(excessBorrow_ - _borrowedHere);
                 _borrowedHere = IERC20(_borrowToken).balanceOf(address(this));
             }
             if (_borrowedHere > 0) {
@@ -380,17 +403,24 @@ abstract contract AaveV3Borrow is Strategy {
         }
     }
 
-    function _repayY(uint256 amount_, ILendingPool aaveLendingPool_) internal {
-        _beforeRepayY(amount_);
-        aaveLendingPool_.repay(borrowToken(), amount_, 2, address(this));
+    /// @dev Repay borrow tokens to Aave. Before repay, withdraw borrow tokens from end protocol if any.
+    function _repay(uint256 amount_, ILendingPool lendingPool_) internal {
+        //
+        // 1. Withdraw borrow tokens from end protocol
+        //
+        _withdrawBorrowToken(amount_);
+        //
+        // 2. Repay borrow tokens to Aave
+        //
+        lendingPool_.repay(borrowToken(), amount_, 2, address(this));
     }
 
     /**
      * @dev Swap collateral to borrow token.
      * @param amountOut_ Expected output of this swap
-     * @param aaveLendingPool_ Aave lending pool instance
+     * @param lendingPool_ Aave lending pool instance
      */
-    function _swapToBorrowToken(uint256 amountOut_, ILendingPool aaveLendingPool_) internal {
+    function _swapToBorrowToken(uint256 amountOut_, ILendingPool lendingPool_) internal {
         address _borrowToken = borrowToken();
         address _wrappedCollateral = address(wrappedCollateral());
         // Looking for _amountIn using fixed output amount
@@ -403,7 +433,7 @@ abstract contract AaveV3Borrow is Strategy {
             if (_maxAmountIn > _collateralHere) {
                 // Withdraw some collateral from Aave so that we have enough collateral to get expected output
                 uint256 _amount = _maxAmountIn - _collateralHere;
-                if (aaveLendingPool_.withdraw(_wrappedCollateral, _amount, address(this)) != _amount)
+                if (lendingPool_.withdraw(_wrappedCollateral, _amount, address(this)) != _amount)
                     revert IncorrectWithdrawAmount();
             }
             swapper().swapExactOutput(_wrappedCollateral, _borrowToken, amountOut_, _maxAmountIn, address(this));
@@ -418,7 +448,8 @@ abstract contract AaveV3Borrow is Strategy {
         return unwrappedAmount_;
     }
 
-    function _withdrawY(uint256 amount_) internal virtual;
+    /// @dev Withdraw borrowed tokens. It usually get called before repaying borrow.
+    function _withdrawBorrowToken(uint256 amount_) internal virtual;
 
     /// @dev If pool supports unwrapped token(stETH) then input and output both are unwrapped token amount.
     function _withdrawHere(uint256 requireAmount_) internal override {
@@ -445,7 +476,7 @@ abstract contract AaveV3Borrow is Strategy {
         uint256 _wrappedRequireAmount = _calculateWrapped(requireAmount_);
         (, uint256 _repayAmount) = _calculateBorrowPosition(0, _wrappedRequireAmount, borrowed_, supplied_);
         if (_repayAmount > 0) {
-            _repayY(_repayAmount, aaveLendingPool_);
+            _repay(_repayAmount, aaveLendingPool_);
         }
         // withdraw asking more than available liquidity will fail. To do safe withdraw, check
         // _wrappedRequireAmount against available liquidity.

@@ -5,7 +5,6 @@ pragma solidity 0.8.25;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {IVesperPool} from "../../../interfaces/vesper/IVesperPool.sol";
 import {ICellar} from "../../../interfaces/sommelier/ISommelier.sol";
 import {SommelierBase} from "../../sommelier/SommelierBase.sol";
 import {AaveV3Borrow} from "./AaveV3Borrow.sol";
@@ -30,8 +29,8 @@ contract AaveV3SommelierBorrow is AaveV3Borrow, SommelierBase {
         if (ICellar(_cellar).asset() != borrowToken()) revert InvalidSommelierVault();
     }
 
-    /// @dev After borrowing Y, deposit to Sommelier vault
-    function _afterBorrowY(uint256 _amount) internal  override {
+    /// @dev Deposit borrow tokens into the Sommelier vault
+    function _depositBorrowToken(uint256 _amount) internal override {
         _depositInSommelier(_amount);
     }
 
@@ -41,19 +40,14 @@ contract AaveV3SommelierBorrow is AaveV3Borrow, SommelierBase {
         IERC20(borrowToken()).forceApprove(address(cellar()), _amount);
     }
 
-    /// @dev Before repaying Y, withdraw it from Sommelier vault
-
-    function _beforeRepayY(uint256 _amount) internal  override {
-        _withdrawY(_amount);
-    }
-
-    /// @notice Withdraw _shares proportional to collateral _amount from vPool
-    function _withdrawY(uint256 _amount) internal  override {
+    /// @dev Before repaying borrow tokens, withdraw from Sommelier vault
+    /// Withdraw _shares proportional to collateral _amount from vPool
+    function _withdrawBorrowToken(uint256 _amount) internal override {
         _withdrawFromSommelier(_amount);
     }
 
     /// @dev borrowToken balance here + borrowToken balance deposited in Sommelier vault
-    function _getInvestedBorrowBalance() internal view  override returns (uint256) {
+    function _getTotalBorrowBalance() internal view override returns (uint256) {
         return IERC20(borrowToken()).balanceOf(address(this)) + _getAssetsInSommelier();
     }
 }

@@ -24,7 +24,7 @@ abstract contract FraxlendV1Borrow is Strategy {
     error MaxShouldBeHigherThanMin();
     error PriceError();
 
-    uint256 internal constant MAX_BPS = 10_000; //100%
+    uint256 private constant MAX_BPS = 10_000; //100%
 
     event UpdatedBorrowLimit(
         uint256 previousMinBorrowLimit,
@@ -50,7 +50,7 @@ abstract contract FraxlendV1Borrow is Strategy {
         keccak256(abi.encode(uint256(keccak256("vesper.storage.Strategy.FraxlendV1Borrow")) - 1)) &
             ~bytes32(uint256(0xff));
 
-    function _getFraxlendV1BorrowStorage() internal pure returns (FraxlendV1BorrowStorage storage $) {
+    function _getFraxlendV1BorrowStorage() private pure returns (FraxlendV1BorrowStorage storage $) {
         bytes32 _location = FraxlendV1BorrowStorageLocation;
         assembly {
             $.slot := _location
@@ -84,11 +84,6 @@ abstract contract FraxlendV1Borrow is Strategy {
         $._maxLtv = fraxlendPair().maxLTV();
     }
 
-    /// @notice Gets amount of borrowed token in strategy + borrowed tokens invested
-    function borrowBalance() external view returns (uint256) {
-        return IERC20(borrowToken()).balanceOf(address(this)) + _getInvestedBorrowTokens();
-    }
-
     function borrowToken() public view returns (address) {
         return _getFraxlendV1BorrowStorage()._borrowToken;
     }
@@ -118,8 +113,28 @@ abstract contract FraxlendV1Borrow is Strategy {
         return fraxlendPair().userCollateralBalance(address(this)) + collateralToken().balanceOf(address(this));
     }
 
-    /// @dev Hook that executes after borrowing tokens.
-    function _afterBorrow(uint256 amount_) internal virtual;
+    /// @dev It will make adjustment to maintain safe borrow position.
+    /// 1. Check if position needs any adjustment.
+    /// 2. Repay borrow tokens if needed.
+    /// 3. Borrow more tokens if needed.
+    function _adjustBorrowPosition() private {
+        //
+        // 1. Check if position needs to repay or borrow more
+        //
+        (uint256 _borrowAmount, uint256 _repayAmount) = _calculateBorrowPosition(0, 0);
+
+        //
+        // 2. Repay borrow token to maintain safe position
+        //
+        if (_repayAmount > 0) {
+            _repay(_repayAmount);
+        } else if (_borrowAmount > 0) {
+            //
+            // 3. Borrow tokens from protocol
+            //
+            _borrow(_borrowAmount);
+        }
+    }
 
     /// @dev Approve all required tokens
     function _approveToken(uint256 amount_) internal virtual override {
@@ -136,12 +151,29 @@ abstract contract FraxlendV1Borrow is Strategy {
         _borrowToken.forceApprove(_swapper, amount_);
     }
 
-    function _borrowedFromFraxlend() internal view returns (uint256) {
+    /// @dev Borrow tokens from Fraxlend. Deposit borrowed tokens into end protocol, if any.
+    function _borrow(uint256 borrowAmount_) private {
+        address _borrowToken = borrowToken();
+        //
+        // 1 Borrow tokens from Fraxlend
+        //
+        fraxlendPair().borrowAsset(borrowAmount_, 0, address(this));
+
+        //
+        // 2 Deposit borrowed tokens into end protocol.
+        //
+        uint256 _borrowBalance = IERC20(_borrowToken).balanceOf(address(this));
+        if (_borrowBalance > 0) {
+            _depositBorrowToken(_borrowBalance);
+        }
+    }
+
+    function _borrowedFromFraxlend() private view returns (uint256) {
         IFraxlendPair _fraxlendPair = fraxlendPair();
         return _fraxlendPair.toBorrowAmount(_fraxlendPair.userBorrowShares(address(this)), true);
     }
 
-    function _calculateBorrow(uint256 collateralAmount_, uint256 exchangeRate_) internal view returns (uint256) {
+    function _calculateBorrow(uint256 collateralAmount_, uint256 exchangeRate_) private view returns (uint256) {
         FraxlendV1BorrowStorage storage $ = _getFraxlendV1BorrowStorage();
         return (collateralAmount_ * $._maxLtv * $._exchangePrecision) / ($._ltvPrecision * exchangeRate_);
     }
@@ -156,7 +188,7 @@ abstract contract FraxlendV1Borrow is Strategy {
     function _calculateBorrowPosition(
         uint256 depositAmount_,
         uint256 withdrawAmount_
-    ) internal view returns (uint256 _borrowAmount, uint256 _repayAmount) {
+    ) private view returns (uint256 _borrowAmount, uint256 _repayAmount) {
         require(depositAmount_ == 0 || withdrawAmount_ == 0, "all-input-gt-zero");
         uint256 _borrowed = _borrowedFromFraxlend();
         // If maximum borrow limit set to 0 then repay borrow
@@ -204,42 +236,26 @@ abstract contract FraxlendV1Borrow is Strategy {
         }
     }
 
-    /// @dev Deposit collateral in protocol and adjust borrow position
-    function _deposit() internal {
-        IERC20 _collateralToken = collateralToken();
-        uint256 _collateralBalance = _collateralToken.balanceOf(address(this));
-        (uint256 _borrowAmount, uint256 _repayAmount) = _calculateBorrowPosition(_collateralBalance, 0);
-        if (_repayAmount > 0) {
-            // Repay to maintain safe position
-            _repay(_repayAmount);
-            // Read collateral balance again as repay() may change balance
-            _collateralBalance = _collateralToken.balanceOf(address(this));
-            if (_collateralBalance > 0) {
-                fraxlendPair().addCollateral(_collateralBalance, address(this));
-            }
-        } else if (_borrowAmount > 0) {
-            // Happy path, mint more borrow more
-            // borrowAsset will deposit collateral and then borrow FRAX
-            fraxlendPair().borrowAsset(_borrowAmount, _collateralBalance, address(this));
-            // Deposit all borrow token, FRAX, we have.
-            _afterBorrow(IERC20(borrowToken()).balanceOf(address(this)));
-        } else if (_collateralBalance > 0) {
-            // If we are not borrowing or repaying, deposit all collateral token.
-            fraxlendPair().addCollateral(_collateralBalance, address(this));
+    /// @dev Deposit borrowed token.
+    /// It is usually called after borrowing tokens from Fraxlend.
+    function _depositBorrowToken(uint256 amount_) internal virtual;
+
+    /// @dev Deposit collateral tokens in Fraxlend.
+    function _depositCollateral(uint256 amount_) private {
+        if (amount_ > 0) {
+            fraxlendPair().addCollateral(amount_, address(this));
         }
     }
 
-    function _getAvailableLiquidity() internal view returns (uint256) {
+    function _getAvailableLiquidity() private view returns (uint256) {
         IFraxlendPair _fraxlendPair = fraxlendPair();
         uint256 _totalAsset = _fraxlendPair.totalAsset().amount;
         uint256 _totalBorrow = _fraxlendPair.totalBorrow().amount;
         return _totalAsset > _totalBorrow ? _totalAsset - _totalBorrow : 0;
     }
 
-    function _getInvestedBorrowTokens() internal view virtual returns (uint256);
-
     /// @dev Get chainlink oracle from fraxlendPair contract
-    function _getOracle(address token_) internal view returns (address _oracle) {
+    function _getOracle(address token_) private view returns (address _oracle) {
         if (token_ == borrowToken()) {
             // Oracle multiply is configured for borrowToken aka asset.
             // For FRAX it is set to null as price of FRAX is expected to be $1.
@@ -251,7 +267,7 @@ abstract contract FraxlendV1Borrow is Strategy {
     }
 
     /// @dev Get Price from oracle. Price has 8 decimals.
-    function _getPrice(address token_) internal view returns (uint256 _price) {
+    function _getPrice(address token_) private view returns (uint256 _price) {
         address _oracle = _getOracle(token_);
         if (_oracle == address(0)) {
             _price = 1e8;
@@ -262,6 +278,11 @@ abstract contract FraxlendV1Borrow is Strategy {
         }
     }
 
+    /// @dev Returns borrowed balance here and deposited into end protocol if any.
+    function _getTotalBorrowBalance() internal view virtual returns (uint256) {
+        return IERC20(borrowToken()).balanceOf(address(this));
+    }
+
     /**
      * @dev Get quote for token price in terms of other token.
      * @param tokenIn_ tokenIn
@@ -269,7 +290,7 @@ abstract contract FraxlendV1Borrow is Strategy {
      * @param amountIn_ amount of tokenIn_
      * @return amountOut of tokenOut_ for amountIn_ of tokenIn_
      */
-    function _quote(address tokenIn_, address tokenOut_, uint256 amountIn_) internal view returns (uint256) {
+    function _quote(address tokenIn_, address tokenOut_, uint256 amountIn_) private view returns (uint256) {
         uint256 _tokenInPrice = _getPrice(tokenIn_);
         uint256 _tokenOutPrice = _getPrice(tokenOut_);
         return ((_tokenInPrice * amountIn_ * (10 ** IERC20Metadata(tokenOut_).decimals())) /
@@ -281,47 +302,22 @@ abstract contract FraxlendV1Borrow is Strategy {
         // Accrue and update interest
         _fraxlendPair.addInterest();
 
-        IERC20 _collateralToken = collateralToken();
-        IERC20 _borrowToken = IERC20(borrowToken());
-        {
-            uint256 _borrowed = _borrowedFromFraxlend();
-            uint256 _borrowTokensHere = _borrowToken.balanceOf(address(this));
-            uint256 _investedBorrowTokens = _getInvestedBorrowTokens();
-            uint256 _totalBorrowTokens = _borrowTokensHere + _investedBorrowTokens;
-
-            // _borrow increases every block. Convert collateral to borrowToken.
-            if (_borrowed > _totalBorrowTokens) {
-                _swapToBorrowToken(_borrowed - _totalBorrowTokens);
-            } else {
-                // When _investedBorrowTokens exceeds _borrowed from protocol
-                // then we have profit from investing borrow tokens. _borrowTokensHere is profit.
-                if (_investedBorrowTokens > _borrowed) {
-                    _withdrawBorrowTokens(_investedBorrowTokens - _borrowed);
-                    _borrowTokensHere = _borrowToken.balanceOf(address(this));
-                }
-                if (_borrowTokensHere > 0) {
-                    // Get quote for _amountIn of borrowToken to collateralToken
-                    uint256 _expectedAmountOut = _quote(
-                        address(_borrowToken),
-                        address(_collateralToken),
-                        _borrowTokensHere
-                    );
-                    uint256 _minAmountOut = (_expectedAmountOut * (MAX_BPS - slippage())) / MAX_BPS;
-                    swapper().swapExactInput(
-                        address(_borrowToken),
-                        address(_collateralToken),
-                        _borrowTokensHere,
-                        _minAmountOut,
-                        address(this)
-                    );
-                }
-            }
+        uint256 _borrowed = _borrowedFromFraxlend();
+        uint256 _totalBorrowBalance = _getTotalBorrowBalance();
+        // _borrow increases every block.
+        if (_borrowed > _totalBorrowBalance) {
+            // Loss making scenario. Convert collateral to borrowToken to repay loss
+            _swapCollateralForBorrow(_borrowed - _totalBorrowBalance);
+        } else {
+            // excess borrow is profit
+            _swapBorrowForCollateral(_totalBorrowBalance - _borrowed);
         }
 
         IVesperPool _pool = IVesperPool(pool());
         uint256 _excessDebt = _pool.excessDebt(address(this));
         uint256 _totalDebt = _pool.totalDebtOf(address(this));
 
+        IERC20 _collateralToken = collateralToken();
         uint256 _collateralHere = _collateralToken.balanceOf(address(this));
         uint256 _collateralInFraxlend = _fraxlendPair.userCollateralBalance(address(this));
         uint256 _totalCollateral = _collateralInFraxlend + _collateralHere;
@@ -342,51 +338,62 @@ abstract contract FraxlendV1Borrow is Strategy {
         _profit = _collateralHere > _payback ? Math.min((_collateralHere - _payback), _profit) : 0;
 
         _pool.reportEarning(_profit, _loss, _payback);
-        _deposit();
+
+        // Deposit collateral tokens sent by the Vesper pool.
+        _depositCollateral(_collateralToken.balanceOf(address(this)));
+
+        _adjustBorrowPosition();
     }
 
-    /**
-     * @dev Repay borrow amount
-     * @param _repayAmount BorrowToken amount that we should repay to maintain safe position.
-     */
-    function _repay(uint256 _repayAmount) internal {
-        if (_repayAmount > 0) {
-            uint256 _totalBorrowTokens = IERC20(borrowToken()).balanceOf(address(this)) + _getInvestedBorrowTokens();
-            // Liability is more than what we have.
-            // To repay loan - convert all rewards to collateral, if asked, and redeem collateral(if needed).
-            // This scenario is rare and if system works okay it will/might happen during final repay only.
-            if (_repayAmount > _totalBorrowTokens) {
-                uint256 _borrowed = _borrowedFromFraxlend();
-                // For example this is final repay and 100 blocks has passed since last withdraw/rebalance,
-                // _borrowed is increasing due to interest. Now if _repayAmount > _borrowBalanceHere is true
-                // _borrowed > _borrowBalanceHere is also true.
-                // To maintain safe position we always try to keep _borrowed = _borrowBalanceHere
-
-                // Swap collateral to borrowToken to repay borrow and also maintain safe position
-                // Here borrowToken amount needed is (_borrowed - _borrowBalanceHere)
-                _swapToBorrowToken(_borrowed - _totalBorrowTokens);
-            }
-            _repayBorrowTokens(_repayAmount);
-        }
-    }
-
-    /// @dev Repay borrow tokens to Fraxlend. Withdraw borrowTokens from end protocol if applicable.
-    function _repayBorrowTokens(uint256 amount_) internal {
-        _withdrawBorrowTokens(amount_);
+    /// @dev Repay borrow tokens to Fraxlend. Before repay, withdraw borrow tokens from end protocol if any.
+    function _repay(uint256 repayAmount_) private {
+        //
+        // 1. Withdraw borrow tokens from end protocol
+        //
+        _withdrawBorrowToken(repayAmount_);
+        //
+        // 2. Repay borrow tokens to Fraxlend
+        //
+        // Note: _withdrawBorrowToken may withdraw less than repayAmount_ and
+        // that will cause repayAsset() to fail. This is desired outcome.
         IFraxlendPair _fraxlendPair = fraxlendPair();
-        uint256 _fraxShare = _fraxlendPair.toBorrowShares(amount_, false);
+        uint256 _fraxShare = _fraxlendPair.toBorrowShares(repayAmount_, false);
         _fraxlendPair.repayAsset(_fraxShare, address(this));
     }
 
+    /// @dev Swap excess borrow token for collateral token.
+    function _swapBorrowForCollateral(uint256 excessBorrow_) private {
+        address _borrowToken = borrowToken();
+        address _collateralToken = address(collateralToken());
+
+        if (excessBorrow_ > 0) {
+            uint256 _borrowBalanceHere = IERC20(_borrowToken).balanceOf(address(this));
+            if (excessBorrow_ > _borrowBalanceHere) {
+                _withdrawBorrowToken(excessBorrow_ - _borrowBalanceHere);
+                _borrowBalanceHere = IERC20(_borrowToken).balanceOf(address(this));
+            }
+            if (_borrowBalanceHere > 0) {
+                // Swap minimum of excessBorrow_ and _borrowBalanceHere for collateral
+                uint256 _amountIn = Math.min(excessBorrow_, _borrowBalanceHere);
+                // Get quote for _amountIn of borrowToken to collateralToken
+                uint256 _expectedAmountOut = _quote(_borrowToken, _collateralToken, _amountIn);
+                // Take slippage into account
+                uint256 _minAmountOut = (_expectedAmountOut * (MAX_BPS - slippage())) / MAX_BPS;
+                // Swap borrow token for collateral
+                swapper().swapExactInput(_borrowToken, _collateralToken, _amountIn, _minAmountOut, address(this));
+            }
+        }
+    }
+
     /**
-     * @dev Swap given token to borrowToken
-     * @param shortOnBorrow_ Expected output of this swap
+     * @dev Swap collateral to borrowToken
+     * @param amountOut_ Expected output of this swap
      */
-    function _swapToBorrowToken(uint256 shortOnBorrow_) internal {
+    function _swapCollateralForBorrow(uint256 amountOut_) private {
         IERC20 _collateralToken = collateralToken();
         address _borrowToken = borrowToken();
         // Looking for _amountIn using fixed output amount
-        uint256 _expectedAmountIn = _quote(address(_collateralToken), _borrowToken, shortOnBorrow_);
+        uint256 _expectedAmountIn = _quote(address(_collateralToken), _borrowToken, amountOut_);
         if (_expectedAmountIn > 0) {
             uint256 _maxAmountIn = (_expectedAmountIn * (MAX_BPS + slippage())) / MAX_BPS;
             uint256 _collateralHere = _collateralToken.balanceOf(address(this));
@@ -396,13 +403,7 @@ abstract contract FraxlendV1Borrow is Strategy {
                 // Redeem some collateral, so that we have enough collateral to get expected output
                 fraxlendPair().removeCollateral(_maxAmountIn - _collateralHere, address(this));
             }
-            swapper().swapExactOutput(
-                address(_collateralToken),
-                _borrowToken,
-                shortOnBorrow_,
-                _maxAmountIn,
-                address(this)
-            );
+            swapper().swapExactOutput(address(_collateralToken), _borrowToken, amountOut_, _maxAmountIn, address(this));
         }
     }
 
@@ -421,52 +422,11 @@ abstract contract FraxlendV1Borrow is Strategy {
         _fraxlendPair.removeCollateral(_withdrawAmount, address(this));
     }
 
-    function _withdrawBorrowTokens(uint256 amount_) internal virtual;
+    function _withdrawBorrowToken(uint256 amount_) internal virtual;
 
     /************************************************************************************************
      *                          Governor/admin/keeper function                                      *
      ***********************************************************************************************/
-    /**
-     * @notice Recover extra borrow tokens from strategy
-     * @dev If we get liquidation in protocol, we will have borrowToken sitting in strategy.
-     * This function allows to recover idle borrow token amount.
-     * @param _amountToRecover Amount of borrow token we want to recover in 1 call.
-     *      Set it 0 to recover all available borrow tokens
-     */
-    function recoverBorrowToken(uint256 _amountToRecover) external onlyKeeper {
-        IERC20 _collateralToken = collateralToken();
-        address _borrowToken = borrowToken();
-        uint256 _borrowBalanceHere = IERC20(_borrowToken).balanceOf(address(this));
-        uint256 _borrow = _borrowedFromFraxlend();
-
-        if (_borrowBalanceHere > _borrow) {
-            uint256 _extraBorrowBalance = _borrowBalanceHere - _borrow;
-            uint256 _recoveryAmount = (_amountToRecover > 0 && _extraBorrowBalance > _amountToRecover)
-                ? _amountToRecover
-                : _extraBorrowBalance;
-            // Do swap and transfer
-            uint256 _amountOut = _trySwapExactInput(_borrowToken, address(_collateralToken), _recoveryAmount);
-            if (_amountOut > 0) {
-                _collateralToken.safeTransfer(pool(), _amountOut);
-            }
-        }
-    }
-
-    /**
-     * @notice Repay all borrow amount and set min borrow limit to 0.
-     * @dev This action usually done when loss is detected in strategy.
-     * @dev 0 borrow limit make sure that any future rebalance do not borrow again.
-     */
-    function repayAll() external onlyKeeper {
-        // Accrue and update interest
-        fraxlendPair().addInterest();
-        _repay(_borrowedFromFraxlend());
-
-        FraxlendV1BorrowStorage storage $ = _getFraxlendV1BorrowStorage();
-        $._minBorrowLimit = 0;
-        $._maxBorrowLimit = 0;
-    }
-
     /**
      * @notice Update upper and lower borrow limit. Usually maxBorrowLimit < 100% of actual collateral factor of protocol.
      * @dev It is possible to set 0 as _minBorrowLimit to not borrow anything

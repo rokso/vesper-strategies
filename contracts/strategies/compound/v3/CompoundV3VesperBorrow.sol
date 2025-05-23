@@ -22,7 +22,7 @@ contract CompoundV3VesperBorrow is CompoundV3Borrow {
         keccak256(abi.encode(uint256(keccak256("vesper.storage.Strategy.CompoundV3VesperBorrow")) - 1)) &
             ~bytes32(uint256(0xff));
 
-    function _getCompoundV3VesperBorrowStorage() internal pure returns (CompoundV3VesperBorrowStorage storage $) {
+    function _getCompoundV3VesperBorrowStorage() private pure returns (CompoundV3VesperBorrowStorage storage $) {
         bytes32 _location = CompoundV3VesperBorrowStorageLocation;
         assembly {
             $.slot := _location
@@ -42,11 +42,6 @@ contract CompoundV3VesperBorrow is CompoundV3Borrow {
         _getCompoundV3VesperBorrowStorage()._vPool = IVesperPool(vPool_);
     }
 
-    /// @notice Gets amount of borrowed Y collateral in strategy + Y collateral amount deposited in vPool
-    function borrowBalance() external view returns (uint256) {
-        return IERC20(borrowToken()).balanceOf(address(this)) + _getYTokensInProtocol();
-    }
-
     function isReservedToken(address token_) public view override returns (bool) {
         return super.isReservedToken(token_) || token_ == address(vPool());
     }
@@ -56,8 +51,8 @@ contract CompoundV3VesperBorrow is CompoundV3Borrow {
         return _getCompoundV3VesperBorrowStorage()._vPool;
     }
 
-    /// @notice After borrowing Y, deposit to Vesper Pool
-    function _afterBorrowY(uint256 amount_) internal override {
+    /// @dev Deposit borrow tokens into the Vesper Pool
+    function _depositBorrowToken(uint256 amount_) internal override {
         vPool().deposit(amount_);
     }
 
@@ -67,13 +62,16 @@ contract CompoundV3VesperBorrow is CompoundV3Borrow {
         IERC20(borrowToken()).forceApprove(address(_vPool), amount_);
     }
 
-    function _getYTokensInProtocol() internal view override returns (uint256) {
+    /// @dev borrowToken balance here + borrowToken balance deposited in Vesper Pool
+    function _getTotalBorrowBalance() internal view override returns (uint256) {
         IVesperPool _vPool = vPool();
-        return (_vPool.pricePerShare() * _vPool.balanceOf(address(this))) / 1e18;
+        return
+            IERC20(borrowToken()).balanceOf(address(this)) +
+            ((_vPool.pricePerShare() * _vPool.balanceOf(address(this))) / 1e18);
     }
 
-    /// @notice Withdraw _shares proportional to collateral _amount from vPool
-    function _withdrawY(uint256 amount_) internal override {
+    /// @dev Withdraw _shares proportional to collateral amount_ from vPool
+    function _withdrawBorrowToken(uint256 amount_) internal override {
         IVesperPool _vPool = vPool();
         uint256 _pricePerShare = _vPool.pricePerShare();
         uint256 _shares = (amount_ * 1e18) / _pricePerShare;

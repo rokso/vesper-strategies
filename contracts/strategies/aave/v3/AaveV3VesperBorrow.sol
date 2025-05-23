@@ -23,7 +23,7 @@ contract AaveV3VesperBorrow is AaveV3Borrow {
         keccak256(abi.encode(uint256(keccak256("vesper.storage.Strategy.AaveV3VesperBorrow")) - 1)) &
             ~bytes32(uint256(0xff));
 
-    function _getAaveV3VesperBorrowStorage() internal pure returns (AaveV3VesperBorrowStorage storage $) {
+    function _getAaveV3VesperBorrowStorage() private pure returns (AaveV3VesperBorrowStorage storage $) {
         bytes32 _location = AaveV3VesperBorrowStorageLocation;
         assembly {
             $.slot := _location

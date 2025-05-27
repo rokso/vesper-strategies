@@ -357,10 +357,7 @@ abstract contract FraxlendV1Borrow is Strategy {
         // Note: _withdrawBorrowToken may withdraw less than repayAmount_ and
         // that will cause repayAsset() to fail. This is desired outcome.
         IFraxlendPair _fraxlendPair = fraxlendPair();
-        uint256 _fraxShare = _fraxlendPair.toBorrowShares(
-            Math.min(repayAmount_, IERC20(borrowToken()).balanceOf(address(this))),
-            false
-        );
+        uint256 _fraxShare = _fraxlendPair.toBorrowShares(repayAmount_, false);
         _fraxlendPair.repayAsset(_fraxShare, address(this));
     }
 

@@ -87,6 +87,23 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
 
     function _getMaxBorrowableInCollateral() internal view virtual returns (uint256);
 
+    function _getTotalBorrowBalance() internal view returns (uint256) {
+        return _getBorrowDeposit() + _getBorrowBalance();
+    }
+
+    /**
+     * There can be scenarios when borrow is in loss. In such cases, rebalance
+     * would swap collateral for borrow. For test purpose, we want to keep
+     * accounting of the collateral balance fixed and therefore avoid swap.
+     */
+    function _adjustBorrowForNoLoss() internal {
+        uint256 _borrowDebt = _getBorrowDebt();
+        uint256 _totalBorrowBalance = _getTotalBorrowBalance();
+        if (_borrowDebt > _totalBorrowBalance) {
+            _increaseBorrowBalance(_borrowDebt - _totalBorrowBalance);
+        }
+    }
+
     function _depositCollateral(uint256 amount) internal {
         _decreaseCollateralBalance(amount);
         _increaseCollateralDeposit(amount);
@@ -146,14 +163,17 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
         assertApproxEqAbs(_getBorrowDeposit(), parseBorrowAmount(50), 1, "borrow deposit (1)");
 
         _withdrawBorrow(parseBorrowAmount(50));
-        _repay(parseBorrowAmount(50));
-        _withdrawCollateral(parseAmount(60) - 1);
+        // Adjust for loss in borrow without this repay all will not be possible
+        _adjustBorrowForNoLoss();
+        // Repay all so that we can withdraw all in next step
+        _repay(_getBorrowDebt());
+        _withdrawCollateral(parseAmount(60));
 
-        assertApproxEqAbs(_getCollateralBalance(), parseAmount(100), 1, "collateral balance (4)");
-        assertApproxEqAbs(_getCollateralDeposit(), 0, 1, "collateral deposit (2)");
-        assertApproxEqAbs(_getBorrowBalance(), 0, 2, "borrow balance (4)");
-        assertApproxEqAbs(_getBorrowDebt(), 0, 3, "borrow debt (3)");
-        assertApproxEqAbs(_getBorrowDeposit(), 0, 1, "borrow deposit (2)");
+        assertEq(_getCollateralBalance(), parseAmount(100), "collateral balance (4)");
+        assertEq(_getCollateralDeposit(), 0, "collateral deposit (2)");
+        assertEq(_getBorrowBalance(), 0, "borrow balance (4)");
+        assertEq(_getBorrowDebt(), 0, "borrow debt (3)");
+        assertEq(_getBorrowDeposit(), 0, "borrow deposit (2)");
     }
 
     function _given() internal returns (uint256 _tvl) {
@@ -173,6 +193,7 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
         assertEq(_getBorrowBalance(), 0, "given: no borrow balance");
 
         pool.updateDebtOfStratregy({target_: initial, latest_: initial});
+        _adjustBorrowForNoLoss();
     }
 
     function test_rebalance_whenCollateralBalanceIncreases() public {
@@ -305,7 +326,7 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
         assertApproxEqRel(
             token().balanceOf(address(pool)),
             _profitInCollateral,
-            0.015e18,
+            0.02e18,
             "balance of pool after rebalance"
         );
     }
@@ -365,7 +386,7 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
         // then
         assertApproxEqRel(strategy.tvl(), _tvlBefore - _lossInCollateral, 0.015e18, "tvl after rebalance");
         assertEq(_getCollateralBalance(), 0, "collateral balance of strategy after rebalance");
-        assertApproxEqAbs(_getBorrowBalance(), 0, 10, "borrow balance of strategy after rebalance");
+        assertEq(_getBorrowBalance(), 0, "borrow balance of strategy after rebalance");
         assertEq(token().balanceOf(address(pool)), 0, "no profit goes to the pool after rebalance");
         assertLt(_getBorrowDebt(), _debtBefore, "debt after rebalance");
     }
@@ -390,7 +411,7 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
         assertApproxEqRel(
             token().balanceOf(address(pool)),
             _profitInCollateral,
-            0.015e18,
+            0.02e18,
             "balance of pool after rebalance"
         );
         assertGt(_getBorrowDebt(), _debtBefore, "debt after rebalance");

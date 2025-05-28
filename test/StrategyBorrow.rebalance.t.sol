@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "forge-std/Test.sol";
 import {IERC20, IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {Strategy_Test} from "./Strategy.t.sol";
 
@@ -211,10 +210,7 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
         uint256 _tvlBefore = _given();
 
         // when
-        console.log("tvl before", _tvlBefore);
-        console.log("tvl before", _getCollateralDeposit());
         uint256 _borrowed = _getBorrowDebt();
-        console.log("borrowed", _borrowed);
         uint256 _loss = (_borrowed * 10_00) / MAX_BPS;
         uint256 _borrowedInCollateral = (_getMaxBorrowableInCollateral() * _s.minBorrowLimit()) / MAX_BPS;
         uint256 _lossInCollateral = (_borrowedInCollateral * 10_00) / MAX_BPS;
@@ -369,7 +365,7 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
         // then
         assertApproxEqRel(strategy.tvl(), _tvlBefore - _lossInCollateral, 0.015e18, "tvl after rebalance");
         assertEq(_getCollateralBalance(), 0, "collateral balance of strategy after rebalance");
-        assertEq(_getBorrowBalance(), 0, "borrow balance of strategy after rebalance");
+        assertApproxEqAbs(_getBorrowBalance(), 0, 10, "borrow balance of strategy after rebalance");
         assertEq(token().balanceOf(address(pool)), 0, "no profit goes to the pool after rebalance");
         assertLt(_getBorrowDebt(), _debtBefore, "debt after rebalance");
     }

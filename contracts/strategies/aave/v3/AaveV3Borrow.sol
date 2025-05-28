@@ -166,6 +166,18 @@ abstract contract AaveV3Borrow is Strategy {
             //
             _borrow(lendingPool_, _borrowAmount);
         }
+
+        //
+        // 4. Deposit borrow tokens into the end protocol, if any.
+        //
+        // In ideal scenario we get borrow balance from _borrow() and deposit
+        // should be called right after _borrow() inside `else if`.
+        // If borrow balance is non zero and `if` conditions doesn't meet then
+        // borrow balance will sit idle and not generate yield.
+        uint256 _borrowBalanceHere = IERC20(borrowToken()).balanceOf(address(this));
+        if (_borrowBalanceHere > 0) {
+            _depositBorrowToken(_borrowBalanceHere);
+        }
     }
 
     /// @notice Approve all required tokens
@@ -181,7 +193,7 @@ abstract contract AaveV3Borrow is Strategy {
         _borrowToken.forceApprove(_swapper, amount_);
     }
 
-    /// @dev Borrow tokens from Aave. Deposit borrowed tokens into end protocol, if any.
+    /// @dev Borrow tokens from Aave.
     function _borrow(ILendingPool lendingPool_, uint256 borrowAmount_) private {
         address _borrowToken = borrowToken();
         //
@@ -189,13 +201,6 @@ abstract contract AaveV3Borrow is Strategy {
         //
         // using 2 for variable rate borrow, 0 for referralCode
         lendingPool_.borrow(_borrowToken, borrowAmount_, 2, 0, address(this));
-        //
-        // 2 Deposit borrowed tokens into end protocol.
-        //
-        uint256 _borrowTokenBalance = IERC20(_borrowToken).balanceOf(address(this));
-        if (_borrowTokenBalance > 0) {
-            _depositBorrowToken(_borrowTokenBalance);
-        }
     }
 
     /**
@@ -383,10 +388,14 @@ abstract contract AaveV3Borrow is Strategy {
 
     /// @dev Repay borrow tokens to Aave. Before repay, withdraw borrow tokens from end protocol if any.
     function _repay(ILendingPool lendingPool_, uint256 repayAmount_) private {
+        address _borrowToken = borrowToken();
         //
         // 1. Withdraw borrow tokens from end protocol
         //
-        _withdrawBorrowToken(repayAmount_);
+        uint256 _borrowBalanceHere = IERC20(_borrowToken).balanceOf(address(this));
+        if (repayAmount_ > _borrowBalanceHere) {
+            _withdrawBorrowToken(repayAmount_ - _borrowBalanceHere);
+        }
         //
         // 2. Repay borrow tokens to Aave
         //

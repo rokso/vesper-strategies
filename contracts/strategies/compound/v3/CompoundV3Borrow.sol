@@ -125,6 +125,17 @@ abstract contract CompoundV3Borrow is Strategy {
             //
             _borrow(_borrowAmount);
         }
+        //
+        // 4. Deposit borrow tokens into the end protocol, if any.
+        //
+        // In ideal scenario we get borrow balance from _borrow() and deposit
+        // should be called right after _borrow() inside `else if`.
+        // If borrow balance is non zero and `if` conditions doesn't meet then
+        // borrow balance will sit idle and not generate yield.
+        uint256 _borrowBalanceHere = IERC20(borrowToken()).balanceOf(address(this));
+        if (_borrowBalanceHere > 0) {
+            _depositBorrowToken(_borrowBalanceHere);
+        }
     }
 
     /// @notice Approve all required tokens
@@ -140,20 +151,13 @@ abstract contract CompoundV3Borrow is Strategy {
         _borrowToken.forceApprove(_swapper, amount_);
     }
 
-    /// @dev Borrow tokens from Compound. Deposit borrowed tokens into end protocol, if any.
+    /// @dev Borrow tokens from Compound.
     function _borrow(uint256 borrowAmount_) private {
         address _borrowToken = borrowToken();
         //
         // 1 Borrow tokens from Compound
         //
         comet().withdraw(_borrowToken, borrowAmount_);
-        //
-        // 2 Deposit borrowed tokens into end protocol.
-        //
-        uint256 _borrowBalance = IERC20(_borrowToken).balanceOf(address(this));
-        if (_borrowBalance > 0) {
-            _depositBorrowToken(_borrowBalance);
-        }
     }
 
     /**
@@ -319,10 +323,14 @@ abstract contract CompoundV3Borrow is Strategy {
 
     /// @dev Repay borrow tokens to Compound. Before repay, withdraw borrow tokens from end protocol if any.
     function _repay(uint256 repayAmount_) private {
+        address _borrowToken = borrowToken();
         //
         // 1. Withdraw borrow tokens from end protocol
         //
-        _withdrawBorrowToken(repayAmount_);
+        uint256 _borrowBalanceHere = IERC20(_borrowToken).balanceOf(address(this));
+        if (repayAmount_ > _borrowBalanceHere) {
+            _withdrawBorrowToken(repayAmount_ - _borrowBalanceHere);
+        }
         //
         // 2. Repay borrow tokens to Compound
         //

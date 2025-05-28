@@ -6,7 +6,7 @@ import {Strategy_Test} from "./Strategy.t.sol";
 
 abstract contract Strategy_Withdraw_Test is Strategy_Test {
     function test_withdraw_fromBalance() public {
-        uint256 amount = parseAmount(1_000);
+        uint256 amount = _poolInitialAmount();
 
         deal(address(token()), address(strategy), amount);
         assertEq(token().balanceOf(address(pool)), 0, "balance of pool before withdraw");
@@ -20,7 +20,7 @@ abstract contract Strategy_Withdraw_Test is Strategy_Test {
     }
 
     function test_withdraw_fromDeposit() public {
-        uint256 amount = parseAmount(1_000);
+        uint256 amount = _poolInitialAmount();
 
         pool.updateDebtOfStratregy({target_: amount, latest_: amount});
 

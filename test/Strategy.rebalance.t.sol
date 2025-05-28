@@ -5,13 +5,9 @@ import "forge-std/Test.sol";
 import {Strategy_Test} from "./Strategy.t.sol";
 
 abstract contract Strategy_Rebalance_Test is Strategy_Test {
-    function _makeProfit(uint256 profit) internal virtual;
-
-    function _makeLoss(uint256 loss) internal virtual;
-
     function test_rebalance_firstRebalance() public {
         // given
-        uint256 initial = parseAmount(1_000);
+        uint256 initial = _poolInitialAmount();
 
         deal(address(token()), address(pool), initial);
         pool.updateDebtOfStratregy({target_: initial, latest_: 0});
@@ -27,7 +23,7 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
 
     function test_rebalance_whenExcessDebtIsZeroAndHasNoProfit() public {
         // given
-        uint256 initial = parseAmount(1_000);
+        uint256 initial = _poolInitialAmount();
 
         deal(address(token()), address(pool), initial);
         pool.updateDebtOfStratregy({target_: initial, latest_: 0});
@@ -46,8 +42,8 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
 
     function test_rebalance_whenExcessDebtIsZeroAndHasProfit() public {
         // given
-        uint256 initial = parseAmount(1_000);
-        uint256 profit = parseAmount(100);
+        uint256 initial = _poolInitialAmount();
+        uint256 profit = (initial * 10_00) / MAX_BPS;
 
         deal(address(token()), address(pool), initial);
         pool.updateDebtOfStratregy({target_: initial, latest_: 0});
@@ -74,8 +70,8 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
 
     function test_rebalance_whenExcessDebtIsZeroAndHasLoss() public {
         // given
-        uint256 initial = parseAmount(1_000);
-        uint256 loss = parseAmount(100);
+        uint256 initial = _poolInitialAmount();
+        uint256 loss = (initial * 10_00) / MAX_BPS;
 
         deal(address(token()), address(pool), initial);
         pool.updateDebtOfStratregy({target_: initial, latest_: 0});
@@ -96,8 +92,8 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
 
     function test_rebalance_whenHasExcessDebtAndHasNoProfit() public {
         // given
-        uint256 initial = parseAmount(1_100);
-        uint256 excess = parseAmount(100);
+        uint256 initial = _poolInitialAmount();
+        uint256 excess = (initial * 10_00) / MAX_BPS;
 
         deal(address(token()), address(pool), initial);
         pool.updateDebtOfStratregy({target_: initial, latest_: 0});
@@ -122,9 +118,9 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
 
     function test_rebalance_whenHasExcessDebtAndHasProfit() public {
         // given
-        uint256 initial = parseAmount(1_100);
-        uint256 excess = parseAmount(100);
-        uint256 profit = parseAmount(100);
+        uint256 initial = _poolInitialAmount();
+        uint256 excess = (initial * 10_00) / MAX_BPS;
+        uint256 profit = (initial * 10_00) / MAX_BPS;
 
         deal(address(token()), address(pool), initial);
         pool.updateDebtOfStratregy({target_: initial, latest_: 0});
@@ -151,9 +147,9 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
 
     function test_rebalance_whenHasExcessDebtAndHasLoss() public {
         // given
-        uint256 initial = parseAmount(1_100);
-        uint256 excess = parseAmount(100);
-        uint256 loss = parseAmount(100);
+        uint256 initial = _poolInitialAmount();
+        uint256 excess = (initial * 10_00) / MAX_BPS;
+        uint256 loss = (initial * 10_00) / MAX_BPS;
 
         deal(address(token()), address(pool), initial);
         pool.updateDebtOfStratregy({target_: initial, latest_: 0});
@@ -179,8 +175,8 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
 
     function test_rebalance_whenHasCreditLimitAndHasNoProfit() public {
         // given
-        uint256 initial = parseAmount(1_100);
-        uint256 credit = parseAmount(100);
+        uint256 initial = _poolInitialAmount();
+        uint256 credit = (initial * 10_00) / MAX_BPS;
 
         deal(address(token()), address(pool), initial + credit);
         pool.updateDebtOfStratregy({target_: initial, latest_: 0});
@@ -200,9 +196,9 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
 
     function test_rebalance_whenHasCreditLimitAndHasProfit() public {
         // given
-        uint256 initial = parseAmount(1_100);
-        uint256 credit = parseAmount(100);
-        uint256 profit = parseAmount(100);
+        uint256 initial = _poolInitialAmount();
+        uint256 credit = (initial * 10_00) / MAX_BPS;
+        uint256 profit = (initial * 10_00) / MAX_BPS;
 
         deal(address(token()), address(pool), initial + credit);
         pool.updateDebtOfStratregy({target_: initial, latest_: 0});
@@ -229,9 +225,9 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
 
     function test_rebalance_whenHasCreditLimitAndHasLoss() public {
         // given
-        uint256 initial = parseAmount(1_000);
-        uint256 credit = parseAmount(100);
-        uint256 loss = parseAmount(100);
+        uint256 initial = _poolInitialAmount();
+        uint256 credit = (initial * 10_00) / MAX_BPS;
+        uint256 loss = (initial * 10_00) / MAX_BPS;
 
         deal(address(token()), address(pool), initial + credit);
         pool.updateDebtOfStratregy({target_: initial, latest_: 0});

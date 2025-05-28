@@ -33,6 +33,7 @@ address constant vaDAI = 0x0538C8bAc84E95A9dF8aC10Aad17DbE81b9E36ee;
 address constant vaFRAX = 0xc14900dFB1Aa54e7674e1eCf9ce02b3b35157ba5;
 address constant vaWBTC = 0x01e1d41C1159b745298724c5Fd3eAfF3da1C6efD;
 address constant vamsUSD = 0x4C73F025a1947ec770327B9956Fc61f535F72C22;
+address constant vaLINK = 0xef4F4604106de23CDadfEAE08fcC34602cB475C1;
 
 // Convex
 address constant CONVEX_BOOSTER = 0xF403C135812408BFbE8713b5A23a04b3D48AAE31;

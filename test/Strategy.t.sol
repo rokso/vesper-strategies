@@ -11,6 +11,8 @@ import {MasterOracleMock} from "test/mocks/MasterOracleMock.sol";
 import {VPoolMock} from "test/mocks/VPoolMock.sol";
 
 abstract contract Strategy_Test is Test {
+    uint256 internal constant MAX_BPS = 100_00;
+
     uint256 immutable MAX_DEPOSIT_SLIPPAGE_REL = 0;
     uint256 immutable MAX_WITHDRAW_SLIPPAGE_REL = 0;
     uint256 immutable MAX_DUST_LEFT_IN_PROTOCOL_AFTER_WITHDRAW_ABS = 0;
@@ -60,5 +62,13 @@ abstract contract Strategy_Test is Test {
     function _rebalance() internal virtual {
         _waitForUnlockTime();
         strategy.rebalance(0, type(uint256).max);
+    }
+
+    function _makeProfit(uint256 profit) internal virtual;
+
+    function _makeLoss(uint256 loss) internal virtual;
+
+    function _poolInitialAmount() internal view virtual returns (uint256) {
+        return parseAmount(1_000);
     }
 }

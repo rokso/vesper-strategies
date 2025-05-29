@@ -180,7 +180,7 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
         uint256 initial = _poolInitialAmount();
         deal(address(token()), address(pool), initial);
 
-        pool.updateDebtOfStratregy({target_: initial, latest_: 0});
+        pool.updateDebtOfStrategy({target_: initial, latest_: 0});
 
         _rebalance();
 
@@ -192,7 +192,7 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
         assertEq(_getCollateralBalance(), 0, "given: no collateral balance");
         assertEq(_getBorrowBalance(), 0, "given: no borrow balance");
 
-        pool.updateDebtOfStratregy({target_: initial, latest_: initial});
+        pool.updateDebtOfStrategy({target_: initial, latest_: initial});
         _adjustBorrowForNoLoss();
     }
 

@@ -35,6 +35,7 @@ contract CompoundV3VesperBorrow_Ethereum_Test is
     }
 
     function _makeProfit(uint256 profit) internal override {
+        _adjustBorrowForNoLoss();
         _increaseCollateralDeposit(profit);
     }
 
@@ -104,7 +105,9 @@ contract CompoundV3VesperBorrow_Ethereum_Test is
         IVesperPool _vPool = _strategy.vPool();
         IERC20 _borrowToken = IERC20(_strategy.borrowToken());
 
-        uint256 _shares = (amount * 1e18) / _vPool.pricePerShare();
+        uint256 _pricePerShare = _vPool.pricePerShare();
+        uint256 _shares = (amount * 1e18) / _pricePerShare;
+        _shares = amount > ((_shares * _pricePerShare) / 1e18) ? _shares + 1 : _shares;
 
         vm.startPrank(address(strategy));
         uint256 _before = _borrowToken.balanceOf(address(strategy));

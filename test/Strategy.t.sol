@@ -35,6 +35,7 @@ abstract contract Strategy_Test is Test {
         strategy.approveToken(type(uint256).max);
 
         _mockVesperPool();
+        console.log("running fork from block", block.number);
     }
 
     function _mockVesperPool() private {

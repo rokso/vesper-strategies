@@ -14,6 +14,7 @@ const func: DeployFunction = async function () {
     swapper: Address.swapper,
     curvePool: Address.Curve.ynETHx_ETH_POOL,
     curvePoolZap: ZeroAddress, // no zap needed
+    curveToken: Address.CRV,
     depositAndStake: Address.Curve.DepositAndStake,
     useDynamicArray: true,
     slippage: 50, // 0.5%
@@ -27,7 +28,7 @@ const func: DeployFunction = async function () {
     contract: CONVEX,
     proxy: {
       // Pass initParam struct as is and then pass convex specific params
-      initializeArgs: [curveInitParams, Address.Convex.booster, 418],
+      initializeArgs: [curveInitParams, Address.Convex.booster, Address.CVX, 418],
     },
   });
 };

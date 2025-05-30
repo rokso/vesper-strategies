@@ -22,6 +22,7 @@ contract ExtraFinance is Strategy {
         IStakingRewards _staking;
         IEToken _eToken;
         uint256 _reserveId;
+        address[] _rewardTokens;
     }
 
     bytes32 private constant ExtraFinanceStorageLocation =
@@ -56,17 +57,21 @@ contract ExtraFinance is Strategy {
         return _getExtraFinanceStorage()._eToken;
     }
 
+    function lendingPool() public view returns (ILendingPool) {
+        return _getExtraFinanceStorage()._lendingPool;
+    }
+
     /// @dev override receiptToken as eToken can be updated via migrateReserve function
     function receiptToken() public view override returns (address) {
         return address(eToken());
     }
 
-    function lendingPool() public view returns (ILendingPool) {
-        return _getExtraFinanceStorage()._lendingPool;
-    }
-
     function reserveId() public view returns (uint256) {
         return _getExtraFinanceStorage()._reserveId;
+    }
+
+    function rewardTokens() public view returns (address[] memory) {
+        return _getExtraFinanceStorage()._rewardTokens;
     }
 
     function staking() public view returns (IStakingRewards) {
@@ -80,22 +85,34 @@ contract ExtraFinance is Strategy {
 
     /// @notice Approve all required tokens
     function _approveToken(uint256 amount_) internal override {
-        ExtraFinanceStorage storage $ = _getExtraFinanceStorage();
-        address _lendingPool = address($._lendingPool);
-        IERC20 _eToken = $._eToken;
-        address _staking = address($._staking);
+        super._approveToken(amount_);
 
-        IERC20 _collateralToken = collateralToken();
-        _collateralToken.forceApprove(pool(), amount_);
-        _collateralToken.forceApprove(_lendingPool, amount_);
+        ExtraFinanceStorage memory s = _getExtraFinanceStorage();
+        collateralToken().forceApprove(address(s._lendingPool), amount_);
+        s._eToken.forceApprove(address(s._staking), amount_);
+        s._eToken.forceApprove(address(s._lendingPool), amount_);
 
-        _eToken.forceApprove(_staking, amount_);
-        _eToken.forceApprove(_lendingPool, amount_);
+        address _swapper = address(swapper());
+        address[] memory _rewardTokens = s._rewardTokens;
+        uint256 _len = _rewardTokens.length;
+        for (uint256 i; i < _len; ++i) {
+            IERC20(_rewardTokens[i]).forceApprove(_swapper, amount_);
+        }
     }
 
     /// @inheritdoc Strategy
-    function _claimRewards() internal override {
+    function _claimAndSwapRewards() internal override {
+        // Note: We can only claim all at once
         staking().claim();
+        address _collateralToken = address(collateralToken());
+        address[] memory _rewardTokens = rewardTokens();
+        uint256 _len = _rewardTokens.length;
+        for (uint256 i; i < _len; ++i) {
+            uint256 _rewardsAmount = IERC20(_rewardTokens[i]).balanceOf(address(this));
+            if (_rewardsAmount > 0 && _rewardTokens[i] != _collateralToken) {
+                _trySwapExactInput(_rewardTokens[i], _collateralToken, _rewardsAmount);
+            }
+        }
     }
 
     /// @dev Convert eToken amount to collateral amount
@@ -116,6 +133,16 @@ contract ExtraFinance is Strategy {
             if (_eTokenBalance > 0) {
                 staking().stake(_eTokenBalance, address(this)); // stake all
             }
+        }
+    }
+
+    /// @dev Fetch reward tokens from the stake contract
+    function _getRewardTokens() internal view virtual returns (address[] memory _rewardTokens) {
+        IStakingRewards _staking = staking();
+        uint256 _len = _staking.rewardsTokenListLength();
+        _rewardTokens = new address[](_len);
+        for (uint256 i; i < _len; ++i) {
+            _rewardTokens[i] = _staking.rewardTokens(i);
         }
     }
 
@@ -170,6 +197,7 @@ contract ExtraFinance is Strategy {
         $._reserveId = reserveId_;
         $._eToken = _eToken;
         $._staking = _staking;
+        $._rewardTokens = _getRewardTokens();
     }
 
     function _unstakeAll() private {
@@ -207,10 +235,12 @@ contract ExtraFinance is Strategy {
      ***********************************************************************************************/
 
     /// @notice Migrate funds to another reserve that supports' the same collateral
-    function migrateReserve(uint256 newReserveId_) external onlyGovernor {
+    function migrateReserve(uint256 newReserveId_, uint256 claimAmountOutMin_) external onlyGovernor {
         // 1. Claim rewards from current staking contract
         IERC20 _collateralToken = collateralToken();
-        _claimRewards();
+        uint256 _before = _collateralToken.balanceOf(address(this));
+        _claimAndSwapRewards();
+        if (_collateralToken.balanceOf(address(this)) - _before < claimAmountOutMin_) revert SlippageTooHigh();
 
         // 2. Withdraw all collateral
         // Note: Do not use `_withdrawHere` in order to make it reverts if available liquidity isn't enough
@@ -226,5 +256,16 @@ contract ExtraFinance is Strategy {
 
         // 5. Deposit all collateral to the new reserve
         _deposit(_collateralToken.balanceOf(address(this)));
+    }
+
+    /// @notice Rewards token can be updated any time. This method refresh list
+    function refetchRewardTokens(uint256 claimAmountOutMin_) external virtual onlyGovernor {
+        // Claim rewards before updating the reward list.
+        IERC20 _collateralToken = collateralToken();
+        uint256 _before = _collateralToken.balanceOf(address(this));
+        _claimAndSwapRewards();
+        if (_collateralToken.balanceOf(address(this)) - _before < claimAmountOutMin_) revert SlippageTooHigh();
+        _getExtraFinanceStorage()._rewardTokens = _getRewardTokens();
+        _approveToken(MAX_UINT_VALUE);
     }
 }

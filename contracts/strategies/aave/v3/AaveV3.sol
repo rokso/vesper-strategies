@@ -6,8 +6,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IAToken} from "../../../interfaces/aave/IAToken.sol";
-import {IIncentivesController} from "../../../interfaces/aave/IIncentivesController.sol";
-import {ILendingPool} from "../../../interfaces/aave/ILendingPool.sol";
 import {IPoolAddressesProvider} from "../../../interfaces/aave/IPoolAddressesProvider.sol";
 import {IVesperPool} from "../../../interfaces/vesper/IVesperPool.sol";
 import {Strategy} from "../../Strategy.sol";
@@ -69,9 +67,18 @@ contract AaveV3 is Strategy {
         collateralToken().forceApprove(address(aavePoolAddressesProvider().getPool()), amount_);
     }
 
-    /// @dev Override function defined in Strategy.sol to claim all rewards from protocol.
-    function _claimRewards() internal override {
-        AaveV3Incentive._claimRewards(receiptToken());
+    /// @dev Claim all rewards and convert to collateral.
+    function _claimAndSwapRewards() internal override {
+        (address[] memory _tokens, uint256[] memory _amounts) = AaveV3Incentive._claimRewards(receiptToken());
+        address _collateralToken = address(collateralToken());
+        address _swapper = address(swapper());
+        uint256 _length = _tokens.length;
+        for (uint256 i; i < _length; ++i) {
+            if (_amounts[i] > 0 && _tokens[i] != _collateralToken) {
+                IERC20(_tokens[i]).forceApprove(_swapper, _amounts[i]);
+                _trySwapExactInput(_tokens[i], _collateralToken, _amounts[i]);
+            }
+        }
     }
 
     function _rebalance() internal override returns (uint256 _profit, uint256 _loss, uint256 _payback) {

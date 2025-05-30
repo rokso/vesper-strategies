@@ -3,7 +3,8 @@ pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
 import {Strategy} from "contracts/strategies/Strategy.sol";
-import {AaveV3, ILendingPool} from "contracts/strategies/aave/v3/AaveV3.sol";
+import {AaveV3} from "contracts/strategies/aave/v3/AaveV3.sol";
+import {ILendingPool} from "contracts/interfaces/aave/ILendingPool.sol";
 import {Strategy_Withdraw_Test} from "test/Strategy.withdraw.t.sol";
 import {Strategy_Rebalance_Test} from "test/Strategy.rebalance.t.sol";
 import {SWAPPER, AAVE_V3_aUSDC, vaUSDC, AAVE_V3_POOL_ADDRESSES_PROVIDER} from "test/helpers/Address.ethereum.sol";

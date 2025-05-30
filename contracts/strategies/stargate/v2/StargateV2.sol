@@ -19,6 +19,7 @@ contract StargateV2 is Strategy {
     struct StargateV2Storage {
         IStargatePool _stargatePool;
         IStargateStaking _stargateStaking;
+        address[] _rewardTokens;
     }
 
     bytes32 private constant StargateV2StorageLocation =
@@ -49,10 +50,15 @@ contract StargateV2 is Strategy {
 
         $._stargatePool = stargatePool_;
         $._stargateStaking = stargateStaking_;
+        $._rewardTokens = stargateStaking_.rewarder(IERC20(_stargateLp)).rewardTokens();
     }
 
     function lpAmountStaked() public view returns (uint256 _lpAmountStaked) {
         _lpAmountStaked = stargateStaking().balanceOf(stargateLp(), address(this));
+    }
+
+    function rewardTokens() public view returns (address[] memory) {
+        return _getStargateV2Storage()._rewardTokens;
     }
 
     function stargateLp() public view returns (IERC20) {
@@ -73,15 +79,33 @@ contract StargateV2 is Strategy {
 
     function _approveToken(uint256 amount_) internal override {
         super._approveToken(amount_);
-        collateralToken().forceApprove(address(stargatePool()), amount_);
-        stargateLp().forceApprove(address(stargateStaking()), amount_);
+
+        StargateV2Storage memory s = _getStargateV2Storage();
+        collateralToken().forceApprove(address(s._stargatePool), amount_);
+        stargateLp().forceApprove(address(s._stargateStaking), amount_);
+
+        address _swapper = address(swapper());
+        address[] memory _rewardTokens = s._rewardTokens;
+        uint256 _len = _rewardTokens.length;
+        for (uint256 i; i < _len; ++i) {
+            IERC20(_rewardTokens[i]).forceApprove(_swapper, amount_);
+        }
     }
 
-    /// @dev Claim rewards from Staking contract
-    function _claimRewards() internal override {
+    function _claimAndSwapRewards() internal virtual override {
         IERC20[] memory _lpTokens = new IERC20[](1);
         _lpTokens[0] = stargateLp();
         stargateStaking().claim(_lpTokens);
+
+        address _collateralToken = address(collateralToken());
+        address[] memory _rewardTokens = rewardTokens();
+        uint256 _len = _rewardTokens.length;
+        for (uint256 i; i < _len; ++i) {
+            uint256 _rewardsAmount = IERC20(_rewardTokens[i]).balanceOf(address(this));
+            if (_rewardsAmount > 0 && _rewardTokens[i] != _collateralToken) {
+                _trySwapExactInput(_rewardTokens[i], _collateralToken, _rewardsAmount);
+            }
+        }
     }
 
     function _deposit(uint256 collateralAmount_) internal virtual {

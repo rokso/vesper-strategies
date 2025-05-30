@@ -118,9 +118,10 @@ const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.25",
     settings: {
+      viaIR: true,
       optimizer: {
         enabled: true,
-        runs: 100,
+        runs: 1000,
       },
     },
   },

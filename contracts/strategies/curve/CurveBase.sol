@@ -47,6 +47,7 @@ abstract contract CurveBase is Strategy {
         address swapper;
         address curvePool;
         address curvePoolZap;
+        address curveToken;
         address depositAndStake;
         bool useDynamicArray;
         uint256 slippage;
@@ -57,6 +58,7 @@ abstract contract CurveBase is Strategy {
 
     /// @custom:storage-location erc7201:vesper.storage.Strategy.CurveBase
     struct CurveBaseStorage {
+        address _curveToken;
         address _curvePool;
         IERC20 _curveLp;
         ILiquidityGaugeV2 _curveGauge;
@@ -69,6 +71,7 @@ abstract contract CurveBase is Strategy {
         uint256 _slippage;
         int128 _collateralIdx;
         address[] _underlyingTokens;
+        address[] _rewardTokens;
         bool _useDynamicArray;
         bool _useUnderlying;
     }
@@ -89,6 +92,7 @@ abstract contract CurveBase is Strategy {
         __Strategy_init(params_.pool, params_.swapper, address(0x1), params_.name);
 
         if (
+            params_.curveToken == address(0) ||
             params_.curvePool == address(0) ||
             params_.depositAndStake == address(0) ||
             params_.weth == address(0) ||
@@ -111,6 +115,7 @@ abstract contract CurveBase is Strategy {
             params_.curvePool,
             params_.weth
         );
+        $._curveToken = params_.curveToken;
         $._curvePool = params_.curvePool;
         $._curveLp = IERC20(_curveLp);
         $._curveGauge = ILiquidityGaugeV2(_curveGauge);
@@ -148,6 +153,10 @@ abstract contract CurveBase is Strategy {
         }
     }
 
+    function curveToken() public view returns (address) {
+        return _getCurveBaseStorage()._curveToken;
+    }
+
     function curvePool() public view returns (address) {
         return _getCurveBaseStorage()._curvePool;
     }
@@ -166,6 +175,10 @@ abstract contract CurveBase is Strategy {
 
     function depositAndStake() public view returns (address) {
         return _getCurveBaseStorage()._depositAndStake;
+    }
+
+    function getRewardTokens() public view returns (address[] memory) {
+        return _getCurveBaseStorage()._rewardTokens;
     }
 
     function getUnderlyingTokens() public view returns (address[] memory) {
@@ -220,11 +233,35 @@ abstract contract CurveBase is Strategy {
             IERC20(_underlyingToken).forceApprove(s._depositAndStake, amount_);
         }
 
+        address[] memory _rewardTokens = s._rewardTokens;
+        uint256 _rewardTokensLength = _rewardTokens.length;
+        for (uint256 i; i < _rewardTokensLength; ++i) {
+            IERC20(_rewardTokens[i]).forceApprove(_swapper, amount_);
+        }
+
         // Gauge needs to be approved for stake via depositAndStake contract. Some Gauge doesn't support this method
         try ILiquidityGaugeV2(s._curveGauge).set_approve_deposit(s._depositAndStake, true) {} catch {}
     }
 
-    function _claimRewards() internal override {
+    /**
+     * @dev Curve pool may have more than one reward token.
+     */
+    function _claimAndSwapRewards() internal override {
+        _claimRewards();
+        address _collateralToken = address(collateralToken());
+        address[] memory _rewardTokens = getRewardTokens();
+        uint256 _len = _rewardTokens.length;
+        for (uint256 i; i < _len; ++i) {
+            address _rewardToken = _rewardTokens[i];
+            uint256 _amountIn = IERC20(_rewardToken).balanceOf(address(this));
+            if (_amountIn > 0) {
+                _trySwapExactInput(_rewardToken, _collateralToken, _amountIn);
+            }
+        }
+    }
+
+    /// @dev Return values are not being used hence returning 0
+    function _claimRewards() internal virtual override returns (address, uint256) {
         ILiquidityGaugeV2 _curveGauge = curveGauge();
         if (block.chainid == 1) {
             CRV_MINTER.mint(address(_curveGauge));
@@ -237,6 +274,7 @@ abstract contract CurveBase is Strategy {
             // This call may fail in some scenarios
             // e.g. 3Crv gauge doesn't have such function
         }
+        return (address(0), 0);
     }
 
     // @dev Convex strategy will have to override this to unstake from gauge and stake in Booster
@@ -347,6 +385,8 @@ abstract contract CurveBase is Strategy {
             return masterOracle().quote(tokenIn_, tokenOut_, amountIn_);
         }
     }
+
+    function _getRewardTokens() internal view virtual returns (address[] memory _rewardTokens);
 
     function _quoteForWithdrawOneCoin(uint256 lpAmountIn_) private view returns (uint256 _amountOut) {
         CurveBaseStorage memory s = _getCurveBaseStorage();
@@ -493,6 +533,20 @@ abstract contract CurveBase is Strategy {
     /************************************************************************************************
      *                          Governor/admin/keeper function                                      *
      ***********************************************************************************************/
+
+    /**
+     * @notice Rewards token in gauge can be updated any time. This method refresh list.
+     * It is recommended to claimAndSwapRewards before calling this function.
+     */
+    function refetchRewardTokens() external onlyGovernor {
+        // 1. Claim rewards before updating rewardTokens
+        _claimAndSwapRewards();
+        // 2. Update rewardTokens array
+        _getCurveBaseStorage()._rewardTokens = _getRewardTokens();
+        // 3. Approve tokens. If needed, forceApprove will set approval to zero before setting new value.
+        _approveToken(MAX_UINT_VALUE);
+    }
+
     function updateSlippage(uint256 newSlippage_) external onlyGovernor {
         if (newSlippage_ >= MAX_BPS) revert InvalidSlippage();
 

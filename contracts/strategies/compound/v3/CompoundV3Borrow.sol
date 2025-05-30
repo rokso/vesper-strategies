@@ -9,6 +9,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {Strategy} from "../../Strategy.sol";
 import {IVesperPool} from "../../../interfaces/vesper/IVesperPool.sol";
 import {IComet} from "../../../interfaces/compound/IComet.sol";
+import {IRewards} from "../../../interfaces/compound/IRewards.sol";
 
 // solhint-disable no-empty-blocks
 
@@ -35,6 +36,8 @@ abstract contract CompoundV3Borrow is Strategy {
     uint256 private constant MAX_BPS = 10_000; //100%
     /// @custom:storage-location erc7201:vesper.storage.Strategy.CompoundV3Borrow
     struct CompoundV3BorrowStorage {
+        IRewards _compRewards;
+        address _rewardToken;
         IComet _comet;
         address _borrowToken;
         uint256 _minBorrowLimit;
@@ -56,15 +59,20 @@ abstract contract CompoundV3Borrow is Strategy {
     function __CompoundV3Borrow_init(
         address pool_,
         address swapper_,
+        address compRewards_,
+        address rewardToken_,
         address comet_,
         address borrowToken_,
         string memory name_
     ) internal onlyInitializing {
         __Strategy_init(pool_, swapper_, comet_, name_);
-        if (borrowToken_ == address(0)) revert AddressIsNull();
+        if (compRewards_ == address(0) || rewardToken_ == address(0) || borrowToken_ == address(0))
+            revert AddressIsNull();
 
         CompoundV3BorrowStorage storage $ = _getCompoundV3BorrowStorage();
         $._comet = IComet(comet_);
+        $._compRewards = IRewards(compRewards_);
+        $._rewardToken = rewardToken_;
         $._borrowToken = borrowToken_;
 
         $._minBorrowLimit = 7_000; // 70% of actual collateral factor of protocol
@@ -80,6 +88,10 @@ abstract contract CompoundV3Borrow is Strategy {
         return _getCompoundV3BorrowStorage()._comet;
     }
 
+    function compRewards() public view returns (IRewards) {
+        return _getCompoundV3BorrowStorage()._compRewards;
+    }
+
     function isReservedToken(address token_) public view virtual override returns (bool) {
         return super.isReservedToken(token_) || token_ == borrowToken();
     }
@@ -90,6 +102,10 @@ abstract contract CompoundV3Borrow is Strategy {
 
     function minBorrowLimit() public view returns (uint256) {
         return _getCompoundV3BorrowStorage()._minBorrowLimit;
+    }
+
+    function rewardToken() public view returns (address) {
+        return _getCompoundV3BorrowStorage()._rewardToken;
     }
 
     function slippage() public view returns (uint256) {
@@ -149,6 +165,7 @@ abstract contract CompoundV3Borrow is Strategy {
         _collateralToken.forceApprove(_swapper, amount_);
         _borrowToken.forceApprove(_comet, amount_);
         _borrowToken.forceApprove(_swapper, amount_);
+        IERC20(rewardToken()).forceApprove(_swapper, amount_);
     }
 
     /// @dev Borrow tokens from Compound.
@@ -158,6 +175,15 @@ abstract contract CompoundV3Borrow is Strategy {
         // 1 Borrow tokens from Compound
         //
         comet().withdraw(_borrowToken, borrowAmount_);
+    }
+
+    /// @dev Claim COMP
+    function _claimRewards() internal override returns (address, uint256) {
+        CompoundV3BorrowStorage memory s = _getCompoundV3BorrowStorage();
+        address _rewardToken = address(s._rewardToken);
+
+        s._compRewards.claim(address(s._comet), address(this), true);
+        return (_rewardToken, IERC20(_rewardToken).balanceOf(address(this)));
     }
 
     /**

@@ -7,6 +7,9 @@ address constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
 address constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 address constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 address constant FRAX = 0x853d955aCEf822Db058eb8505911ED77F175b99e;
+address constant COMP = 0xc00e94Cb662C3520282E6f5717214004A7f26888;
+address constant CRV = 0xD533a949740bb3306d119CC777fa900bA034cd52;
+address constant CVX = 0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;
 
 // Bloq
 address constant SWAPPER = 0x229f19942612A8dbdec3643CB23F88685CCd56A5;
@@ -26,6 +29,7 @@ address constant CURVE_ynETHx_ETH_POOL = 0xD65ed4BcE447195187f37cE7D82f56AdF1826
 
 // Compound V3
 address constant cUSDCv3 = 0xc3d688B66703497DAA19211EEdff47f25384cdc3;
+address constant rewards = 0x1B0e765F6224C21223AeA2af16c1C46E38885a40;
 
 // Vesper
 address constant vaETH = 0xd1C117319B3595fbc39b471AB1fd485629eb05F2;

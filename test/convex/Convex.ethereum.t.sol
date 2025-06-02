@@ -11,6 +11,7 @@ import {deinitialize} from "test/helpers/Functions.sol";
 contract Convex_Ethereum_eUSD_USDC_Test is Convex_Test {
     constructor() {
         MAX_DEPOSIT_SLIPPAGE_REL = 0.0095e18;
+        MAX_WITHDRAW_SLIPPAGE_REL = 0.001e18;
     }
 
     function _setUp() internal override {
@@ -38,6 +39,7 @@ contract Convex_Ethereum_eUSD_USDC_Test is Convex_Test {
 contract Convex_Ethereum_ynETHx_ETH_Test is Convex_Test {
     constructor() {
         MAX_DEPOSIT_SLIPPAGE_REL = 0.0095e18;
+        MAX_WITHDRAW_SLIPPAGE_REL = 0.001e18;
     }
 
     function _setUp() internal override {

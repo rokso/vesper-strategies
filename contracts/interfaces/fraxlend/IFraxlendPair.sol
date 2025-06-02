@@ -57,4 +57,9 @@ interface IFraxlendPair is IFraxlendPairBase {
     /// @param _owner The owner of the Asset Shares (fTokens)
     /// @return _amountToReturn The amount of Asset Tokens to be transferred
     function redeem(uint256 _shares, address _receiver, address _owner) external returns (uint256 _amountToReturn);
+
+    /// @notice The ```updateExchangeRate``` function is the external implementation of _updateExchangeRate.
+    /// @dev This function is invoked at most once per block as these queries can be expensive
+    /// @return _exchangeRate The new exchange rate
+    function updateExchangeRate() external returns (uint256 _exchangeRate);
 }

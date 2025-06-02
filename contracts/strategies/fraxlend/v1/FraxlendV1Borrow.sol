@@ -294,6 +294,8 @@ abstract contract FraxlendV1Borrow is Strategy {
         IFraxlendPair _fraxlendPair = fraxlendPair();
         // Accrue and update interest
         _fraxlendPair.addInterest();
+        // Update exchange rate
+        _fraxlendPair.updateExchangeRate();
 
         uint256 _borrowed = _fraxlendPair.toBorrowAmount(_fraxlendPair.userBorrowShares(address(this)), true);
         uint256 _totalBorrowBalance = _getTotalBorrowBalance();

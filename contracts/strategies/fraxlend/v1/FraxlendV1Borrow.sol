@@ -81,7 +81,7 @@ abstract contract FraxlendV1Borrow is Strategy {
         (uint256 _LTV_PRECISION, , , , uint256 _EXCHANGE_PRECISION, , , ) = IFraxlendPair(fraxlendPair_).getConstants();
         $._ltvPrecision = _LTV_PRECISION;
         $._exchangePrecision = _EXCHANGE_PRECISION;
-        $._maxLtv = fraxlendPair().maxLTV();
+        $._maxLtv = IFraxlendPair(fraxlendPair_).maxLTV();
     }
 
     function borrowToken() public view returns (address) {
@@ -165,20 +165,7 @@ abstract contract FraxlendV1Borrow is Strategy {
 
     /// @dev Borrow tokens from Fraxlend.
     function _borrow(uint256 borrowAmount_) private {
-        //
-        // 1 Borrow tokens from Fraxlend
-        //
         fraxlendPair().borrowAsset(borrowAmount_, 0, address(this));
-    }
-
-    function _borrowedFromFraxlend() private view returns (uint256) {
-        IFraxlendPair _fraxlendPair = fraxlendPair();
-        return _fraxlendPair.toBorrowAmount(_fraxlendPair.userBorrowShares(address(this)), true);
-    }
-
-    function _calculateBorrow(uint256 collateralAmount_, uint256 exchangeRate_) private view returns (uint256) {
-        FraxlendV1BorrowStorage storage $ = _getFraxlendV1BorrowStorage();
-        return (collateralAmount_ * $._maxLtv * $._exchangePrecision) / ($._ltvPrecision * exchangeRate_);
     }
 
     /**
@@ -193,13 +180,15 @@ abstract contract FraxlendV1Borrow is Strategy {
         uint256 withdrawAmount_
     ) private view returns (uint256 _borrowAmount, uint256 _repayAmount) {
         require(depositAmount_ == 0 || withdrawAmount_ == 0, "all-input-gt-zero");
-        uint256 _borrowed = _borrowedFromFraxlend();
+
+        IFraxlendPair _fraxlendPair = fraxlendPair();
+        uint256 _borrowed = _fraxlendPair.toBorrowAmount(_fraxlendPair.userBorrowShares(address(this)), true);
+        FraxlendV1BorrowStorage memory s = _getFraxlendV1BorrowStorage();
         // If maximum borrow limit set to 0 then repay borrow
-        if (maxBorrowLimit() == 0) {
+        if (s._maxBorrowLimit == 0) {
             return (0, _borrowed);
         }
 
-        IFraxlendPair _fraxlendPair = fraxlendPair();
         uint256 _collateralSupplied = _fraxlendPair.userCollateralBalance(address(this));
 
         // In case of withdraw, withdrawAmount_ may be greater than _collateralSupplied
@@ -213,7 +202,8 @@ abstract contract FraxlendV1Borrow is Strategy {
         uint224 _exchangeRate = _fraxlendPair.exchangeRateInfo().exchangeRate;
 
         // Max borrow limit in borrow token i.e. FRAX.
-        uint256 _maxBorrowPossible = _calculateBorrow(_hypotheticalCollateral, _exchangeRate);
+        uint256 _maxBorrowPossible = (_hypotheticalCollateral * s._maxLtv * s._exchangePrecision) /
+            (s._ltvPrecision * _exchangeRate);
 
         // If maxBorrow is zero, we should repay total amount of borrow
         if (_maxBorrowPossible == 0) {
@@ -305,7 +295,7 @@ abstract contract FraxlendV1Borrow is Strategy {
         // Accrue and update interest
         _fraxlendPair.addInterest();
 
-        uint256 _borrowed = _borrowedFromFraxlend();
+        uint256 _borrowed = _fraxlendPair.toBorrowAmount(_fraxlendPair.userBorrowShares(address(this)), true);
         uint256 _totalBorrowBalance = _getTotalBorrowBalance();
         // _borrow increases every block.
         if (_borrowed > _totalBorrowBalance) {

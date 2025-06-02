@@ -10,7 +10,7 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
         uint256 initial = _poolInitialAmount();
 
         deal(address(token()), address(pool), initial);
-        pool.updateDebtOfStratregy({target_: initial, latest_: 0});
+        pool.updateDebtOfStrategy({target_: initial, latest_: 0});
         assertEq(strategy.tvl(), 0, "tvl before rebalance");
 
         // when
@@ -26,10 +26,10 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
         uint256 initial = _poolInitialAmount();
 
         deal(address(token()), address(pool), initial);
-        pool.updateDebtOfStratregy({target_: initial, latest_: 0});
+        pool.updateDebtOfStrategy({target_: initial, latest_: 0});
         _rebalance();
 
-        pool.updateDebtOfStratregy({target_: initial, latest_: initial});
+        pool.updateDebtOfStrategy({target_: initial, latest_: initial});
 
         // when
         assertEq(pool.excessDebt(address(strategy)), 0, "excess debt before rebalance");
@@ -46,10 +46,10 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
         uint256 profit = (initial * 10_00) / MAX_BPS;
 
         deal(address(token()), address(pool), initial);
-        pool.updateDebtOfStratregy({target_: initial, latest_: 0});
+        pool.updateDebtOfStrategy({target_: initial, latest_: 0});
         _rebalance();
 
-        pool.updateDebtOfStratregy({target_: initial, latest_: initial});
+        pool.updateDebtOfStrategy({target_: initial, latest_: initial});
         _makeProfit(profit);
         assertApproxEqRel(strategy.tvl(), initial + profit, MAX_DEPOSIT_SLIPPAGE_REL, "tvl before rebalance");
 
@@ -74,10 +74,10 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
         uint256 loss = (initial * 10_00) / MAX_BPS;
 
         deal(address(token()), address(pool), initial);
-        pool.updateDebtOfStratregy({target_: initial, latest_: 0});
+        pool.updateDebtOfStrategy({target_: initial, latest_: 0});
         _rebalance();
 
-        pool.updateDebtOfStratregy({target_: initial, latest_: initial});
+        pool.updateDebtOfStrategy({target_: initial, latest_: initial});
         _makeLoss(loss);
 
         // when
@@ -96,10 +96,10 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
         uint256 excess = (initial * 10_00) / MAX_BPS;
 
         deal(address(token()), address(pool), initial);
-        pool.updateDebtOfStratregy({target_: initial, latest_: 0});
+        pool.updateDebtOfStrategy({target_: initial, latest_: 0});
         _rebalance();
 
-        pool.updateDebtOfStratregy({target_: initial - excess, latest_: initial});
+        pool.updateDebtOfStrategy({target_: initial - excess, latest_: initial});
 
         // when
         assertEq(pool.excessDebt(address(strategy)), excess, "excess debt before rebalance");
@@ -123,10 +123,10 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
         uint256 profit = (initial * 10_00) / MAX_BPS;
 
         deal(address(token()), address(pool), initial);
-        pool.updateDebtOfStratregy({target_: initial, latest_: 0});
+        pool.updateDebtOfStrategy({target_: initial, latest_: 0});
         _rebalance();
 
-        pool.updateDebtOfStratregy({target_: initial - excess, latest_: initial});
+        pool.updateDebtOfStrategy({target_: initial - excess, latest_: initial});
         _makeProfit(profit);
         assertApproxEqRel(strategy.tvl(), initial + profit, MAX_DEPOSIT_SLIPPAGE_REL, "tvl before rebalance");
 
@@ -152,10 +152,10 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
         uint256 loss = (initial * 10_00) / MAX_BPS;
 
         deal(address(token()), address(pool), initial);
-        pool.updateDebtOfStratregy({target_: initial, latest_: 0});
+        pool.updateDebtOfStrategy({target_: initial, latest_: 0});
         _rebalance();
 
-        pool.updateDebtOfStratregy({target_: initial - excess, latest_: initial});
+        pool.updateDebtOfStrategy({target_: initial - excess, latest_: initial});
         _makeLoss(loss);
 
         // when
@@ -179,10 +179,10 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
         uint256 credit = (initial * 10_00) / MAX_BPS;
 
         deal(address(token()), address(pool), initial + credit);
-        pool.updateDebtOfStratregy({target_: initial, latest_: 0});
+        pool.updateDebtOfStrategy({target_: initial, latest_: 0});
         _rebalance();
 
-        pool.updateDebtOfStratregy({target_: initial + credit, latest_: initial});
+        pool.updateDebtOfStrategy({target_: initial + credit, latest_: initial});
 
         // when
         assertEq(pool.creditLimit(address(strategy)), credit, "excess debt before rebalance");
@@ -201,10 +201,10 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
         uint256 profit = (initial * 10_00) / MAX_BPS;
 
         deal(address(token()), address(pool), initial + credit);
-        pool.updateDebtOfStratregy({target_: initial, latest_: 0});
+        pool.updateDebtOfStrategy({target_: initial, latest_: 0});
         _rebalance();
 
-        pool.updateDebtOfStratregy({target_: initial + credit, latest_: initial});
+        pool.updateDebtOfStrategy({target_: initial + credit, latest_: initial});
         _makeProfit(profit);
         assertApproxEqRel(strategy.tvl(), initial + profit, MAX_DEPOSIT_SLIPPAGE_REL, "tvl before rebalance");
 
@@ -230,10 +230,10 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
         uint256 loss = (initial * 10_00) / MAX_BPS;
 
         deal(address(token()), address(pool), initial + credit);
-        pool.updateDebtOfStratregy({target_: initial, latest_: 0});
+        pool.updateDebtOfStrategy({target_: initial, latest_: 0});
         _rebalance();
 
-        pool.updateDebtOfStratregy({target_: initial + credit, latest_: initial});
+        pool.updateDebtOfStrategy({target_: initial + credit, latest_: initial});
         _makeLoss(loss);
 
         // when

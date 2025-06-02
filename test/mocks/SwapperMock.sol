@@ -32,8 +32,6 @@ contract SwapperMock is ISwapper, Test {
         IERC20(tokenIn_).transferFrom(msg.sender, address(this), amountIn_);
         _amountOut = (masterOracle.quote(tokenIn_, tokenOut_, amountIn_) * (1e18 - slippage)) / 1e18;
         require(_amountOut >= amountOutMin_, "SwapperMock: Slippage too high");
-        // require(IERC20(tokenOut_).balanceOf(address(this)) >= _amountOut, "SwapperMock: Not enough tokenOut balance");
-        // IERC20(tokenOut_).transfer(receiver_, _amountOut);
         deal(tokenOut_, receiver_, IERC20(tokenOut_).balanceOf(receiver_) + _amountOut);
     }
 
@@ -55,7 +53,17 @@ contract SwapperMock is ISwapper, Test {
         uint256 amountOut_,
         uint256 amountInMax_,
         address receiver_
-    ) external override returns (uint256 _amountIn) {}
+    ) external override returns (uint256 _amountIn) {
+        _amountIn = (masterOracle.quote(tokenOut_, tokenIn_, amountOut_) * (1e18 + slippage)) / 1e18;
+        require(_amountIn <= amountInMax_, "SwapperMock: Slippage too high");
+        require(
+            IERC20(tokenIn_).allowance(msg.sender, address(this)) >= _amountIn,
+            "SwapperMock: Not enough tokenIn approved"
+        );
+        IERC20(tokenIn_).transferFrom(msg.sender, address(this), _amountIn);
+
+        deal(tokenOut_, receiver_, IERC20(tokenOut_).balanceOf(receiver_) + amountOut_);
+    }
 
     function getAllExchanges() external view returns (address[] memory) {}
 }

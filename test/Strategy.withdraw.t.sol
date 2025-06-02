@@ -22,7 +22,7 @@ abstract contract Strategy_Withdraw_Test is Strategy_Test {
     function test_withdraw_fromDeposit() public {
         uint256 amount = _poolInitialAmount();
 
-        pool.updateDebtOfStratregy({target_: amount, latest_: amount});
+        pool.updateDebtOfStrategy({target_: amount, latest_: amount});
 
         deal(address(token()), address(strategy), amount);
 

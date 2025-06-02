@@ -16,7 +16,7 @@ contract VPoolMock {
         token = IERC20(token_);
     }
 
-    function updateDebtOfStratregy(uint256 target_, uint256 latest_) external {
+    function updateDebtOfStrategy(uint256 target_, uint256 latest_) external {
         target = target_;
         latest = latest_;
     }

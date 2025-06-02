@@ -6,7 +6,7 @@ import {Strategy} from "contracts/strategies/Strategy.sol";
 import {AaveV3, ILendingPool} from "contracts/strategies/aave/v3/AaveV3.sol";
 import {Strategy_Withdraw_Test} from "test/Strategy.withdraw.t.sol";
 import {Strategy_Rebalance_Test} from "test/Strategy.rebalance.t.sol";
-import {SWAPPER, AAVE_V3_aUSDC, vaUSDC, AAVE_V3_POOL_ADDRESS_PROVIDER} from "test/helpers/Address.ethereum.sol";
+import {SWAPPER, AAVE_V3_aUSDC, vaUSDC, AAVE_V3_POOL_ADDRESSES_PROVIDER} from "test/helpers/Address.ethereum.sol";
 import {deinitialize} from "test/helpers/Functions.sol";
 
 contract AaveV3_Ethereum_Test is Strategy_Withdraw_Test, Strategy_Rebalance_Test {
@@ -19,7 +19,7 @@ contract AaveV3_Ethereum_Test is Strategy_Withdraw_Test, Strategy_Rebalance_Test
 
         strategy = new AaveV3();
         deinitialize(address(strategy));
-        AaveV3(address(strategy)).initialize(vaUSDC, SWAPPER, AAVE_V3_aUSDC, AAVE_V3_POOL_ADDRESS_PROVIDER, "");
+        AaveV3(address(strategy)).initialize(vaUSDC, SWAPPER, AAVE_V3_aUSDC, AAVE_V3_POOL_ADDRESSES_PROVIDER, "");
     }
 
     function _makeLoss(uint256 loss) internal override {

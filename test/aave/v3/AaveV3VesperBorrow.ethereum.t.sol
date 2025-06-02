@@ -138,6 +138,10 @@ contract AaveV3VesperBorrow_Ethereum_Test is
         vm.stopPrank();
     }
 
+    function _rebalanceBorrow() internal override {
+        _adjustBorrowForNoLoss();
+    }
+
     function _getCollateralDeposit() internal view override returns (uint256) {
         return IERC20(strategy.receiptToken()).balanceOf(address(strategy));
     }

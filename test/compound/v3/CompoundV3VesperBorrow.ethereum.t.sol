@@ -117,6 +117,10 @@ contract CompoundV3VesperBorrow_Ethereum_Test is
         vm.stopPrank();
     }
 
+    function _rebalanceBorrow() internal override {
+        _adjustBorrowForNoLoss();
+    }
+
     function _getCollateralDeposit() internal view override returns (uint256) {
         CompoundV3VesperBorrow _strategy = CompoundV3VesperBorrow(payable(address(strategy)));
         IERC20 _collateralToken = strategy.collateralToken();

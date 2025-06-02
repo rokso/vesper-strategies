@@ -12,6 +12,7 @@ import {deinitialize} from "test/helpers/Functions.sol";
 contract AaveV3_Ethereum_Test is Strategy_Withdraw_Test, Strategy_Rebalance_Test {
     constructor() {
         MAX_DEPOSIT_SLIPPAGE_REL = 0.0000001e18;
+        MAX_WITHDRAW_SLIPPAGE_REL = 0.0000001e18;
     }
 
     function _setUp() internal override {

@@ -106,6 +106,10 @@ contract FraxlendV1VesperBorrow_Ethereum_Test is
         vm.stopPrank();
     }
 
+    function _rebalanceBorrow() internal override {
+        _adjustBorrowForNoLoss();
+    }
+
     function _getCollateralDeposit() internal view override returns (uint256) {
         IFraxlendPair _pair = FraxlendV1VesperBorrow(address(strategy)).fraxlendPair();
         return _pair.userCollateralBalance(address(strategy));

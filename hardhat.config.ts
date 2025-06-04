@@ -1,6 +1,5 @@
 import { HardhatUserConfig } from "hardhat/types";
 import "@nomicfoundation/hardhat-toolbox";
-import "@openzeppelin/hardhat-upgrades";
 import "hardhat-contract-sizer";
 import "hardhat-deploy";
 import "hardhat-deploy-ethers";
@@ -90,11 +89,7 @@ const config: HardhatUserConfig = {
 
   etherscan: {
     enabled: true, // process.env.FORK_NODE_URL ? false : true,
-    apiKey: {
-      mainnet: process.env.MAINNET_ETHERSCAN_API_KEY || "",
-      optimism: process.env.OPTIMISM_ETHERSCAN_API_KEY || "",
-      base: process.env.BASE_ETHERSCAN_API_KEY || "",
-    },
+    apiKey: process.env.ETHERSCAN_API_KEY,
     customChains: [
       {
         network: "base",

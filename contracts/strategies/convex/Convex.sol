@@ -5,7 +5,7 @@ pragma solidity 0.8.25;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ILiquidityGaugeV2} from "../../interfaces/curve/ILiquidityGauge.sol";
-import {IConvex, IRewards} from "../../interfaces/convex/IConvexForCurve.sol";
+import {IConvex, IRewards, IStashTokenWrapper} from "../../interfaces/convex/IConvexForCurve.sol";
 import {CurveBase} from "../curve/CurveBase.sol";
 
 // Convex Strategy
@@ -38,19 +38,24 @@ contract Convex is CurveBase {
     function initialize(
         CurveBase.CurveInitParams memory params_,
         IConvex booster_,
+        address convexToken_,
         uint256 convexPoolId_
     ) external initializer {
         __CurveBase_init(params_);
 
-        if (address(booster_) == address(0)) revert AddressIsNull();
+        if (convexToken_ == address(0) || address(booster_) == address(0)) revert AddressIsNull();
 
         (address _lp, , , address _rewards, , ) = booster_.poolInfo(convexPoolId_);
         if (_lp != address(receiptToken())) revert IncorrectLpToken();
 
         ConvexStorage storage $ = _getConvexStorage();
+        $._convexToken = convexToken_;
         $._booster = booster_;
         $._convexRewards = IRewards(_rewards);
         $._convexPoolId = convexPoolId_;
+
+        // set rewardTokens
+        _getCurveBaseStorage()._rewardTokens = _getRewardTokens();
     }
 
     function booster() public view returns (IConvex) {
@@ -76,6 +81,56 @@ contract Convex is CurveBase {
     function _approveToken(uint256 amount_) internal override {
         super._approveToken(amount_);
         curveLp().forceApprove(address(booster()), amount_);
+    }
+
+    /// @dev Return values are not being used hence returning 0
+    function _claimRewards() internal override returns (address, uint256) {
+        if (!convexRewards().getReward(address(this), true)) revert RewardClaimFailed();
+        return (address(0), 0);
+    }
+
+    function _getRewardToken(uint256 index_) private view returns (address) {
+        address _rewardToken = IRewards(convexRewards().extraRewards(index_)).rewardToken();
+        // Convex has some token wrappers which aren't ERC20 tokens but has a token function.
+        // Checking allowance will revert if the token is not an ERC20 token.
+        try IERC20(_rewardToken).allowance(address(this), address(swapper())) {} catch {
+            _rewardToken = IStashTokenWrapper(_rewardToken).token();
+        }
+        return _rewardToken;
+    }
+
+    /**
+     * @notice Add reward tokens
+     * The Convex pools have CRV and CVX as base rewards and may have others tokens as extra rewards
+     * In some cases, CVX is also added as extra reward, reason why we have to ensure to not add it twice
+     * @return _rewardTokens The array of reward tokens (both base and extra rewards)
+     */
+    function _getRewardTokens() internal view override returns (address[] memory _rewardTokens) {
+        address _curveToken = curveToken();
+        address _convexToken = convexToken();
+        uint256 _extraRewardCount;
+        uint256 _length = convexRewards().extraRewardsLength();
+
+        for (uint256 i; i < _length; i++) {
+            address _rewardToken = _getRewardToken(i);
+            // CRV and CVX are default rewardTokens and should not be counted again
+            if (_rewardToken != _curveToken && _rewardToken != _convexToken) {
+                _extraRewardCount++;
+            }
+        }
+
+        _rewardTokens = new address[](_extraRewardCount + 2);
+        _rewardTokens[0] = _curveToken;
+        _rewardTokens[1] = _convexToken;
+        uint256 _nextIdx = 2;
+
+        for (uint256 i; i < _length; i++) {
+            address _rewardToken = _getRewardToken(i);
+            // CRV and CVX already added in array
+            if (_rewardToken != _curveToken && _rewardToken != _convexToken) {
+                _rewardTokens[_nextIdx++] = _rewardToken;
+            }
+        }
     }
 
     function _deposit() internal override {

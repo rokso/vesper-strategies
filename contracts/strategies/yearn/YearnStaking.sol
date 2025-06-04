@@ -19,6 +19,7 @@ contract YearnStaking is Strategy {
     struct YearnStakingStorage {
         IStakingRewards _stakingRewards;
         IYToken _yTokenReward;
+        address _rewardToken;
         uint256 _yTokenDecimals;
     }
 
@@ -46,7 +47,13 @@ contract YearnStaking is Strategy {
         YearnStakingStorage storage $ = _getYearnStakingStorage();
         $._yTokenDecimals = 10 ** IYToken(receiptToken_).decimals();
         $._stakingRewards = stakingRewards_;
-        $._yTokenReward = IYToken(stakingRewards_.rewardsToken());
+        IYToken _yTokenReward = IYToken(stakingRewards_.rewardsToken());
+        $._yTokenReward = _yTokenReward;
+        $._rewardToken = IYToken(_yTokenReward).token();
+    }
+
+    function rewardToken() public view returns (address) {
+        return _getYearnStakingStorage()._rewardToken;
     }
 
     function stakingRewards() public view returns (IStakingRewards) {
@@ -75,16 +82,24 @@ contract YearnStaking is Strategy {
         address _yToken = address(yToken());
         collateralToken().forceApprove(_yToken, amount_);
         IERC20(_yToken).forceApprove(address(stakingRewards()), amount_);
+        IERC20(rewardToken()).forceApprove(address(swapper()), amount_);
     }
 
-    function _claimRewards() internal override {
+    function _claimAndSwapRewards() internal override {
+        YearnStakingStorage memory s = _getYearnStakingStorage();
         // Claim reward and it will give us yToken as reward
-        stakingRewards().getReward();
-        IYToken _yTokenReward = yTokenReward();
-        uint256 _yRewardsAmount = _yTokenReward.balanceOf(address(this));
+        s._stakingRewards.getReward();
+        uint256 _yRewardsAmount = s._yTokenReward.balanceOf(address(this));
         if (_yRewardsAmount > 0) {
             // Withdraw actual reward token from yToken
-            _yTokenReward.withdraw(_yRewardsAmount);
+            s._yTokenReward.withdraw(_yRewardsAmount);
+        }
+
+        // Swap reward to collateral
+        address _collateralToken = address(collateralToken());
+        uint256 _rewardsAmount = IERC20(s._rewardToken).balanceOf(address(this));
+        if (_rewardsAmount > 0 && s._rewardToken != _collateralToken) {
+            _trySwapExactInput(s._rewardToken, _collateralToken, _rewardsAmount);
         }
     }
 

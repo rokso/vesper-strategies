@@ -159,9 +159,13 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
     }
 
     /// @notice OnlyKeeper: Claim rewards from protocol.
-    /// @dev This function will only be used when protocol doesn't offer claim by anyone.
-    function claimRewards() external onlyKeeper {
-        _claimRewards();
+    /// @dev Claim rewardToken and convert rewardToken into collateral token.
+    function claimAndSwapRewards(uint256 minAmountOut_) external onlyKeeper returns (uint256 _amountOut) {
+        IERC20 _collateralToken = collateralToken();
+        uint256 _collateralBefore = _collateralToken.balanceOf(address(this));
+        _claimAndSwapRewards();
+        _amountOut = _collateralToken.balanceOf(address(this)) - _collateralBefore;
+        if (_amountOut < minAmountOut_) revert NotEnoughAmountOut();
     }
 
     /**
@@ -276,7 +280,14 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
 
     function _authorizeUpgrade(address newImplementation) internal override onlyGovernor {}
 
-    function _claimRewards() internal virtual {}
+    function _claimAndSwapRewards() internal virtual {
+        (address _rewardToken, uint256 _rewardsAmount) = _claimRewards();
+        if (_rewardsAmount > 0) {
+            _trySwapExactInput(_rewardToken, address(collateralToken()), _rewardsAmount);
+        }
+    }
+
+    function _claimRewards() internal virtual returns (address, uint256) {}
 
     function _rebalance() internal virtual returns (uint256 _profit, uint256 _loss, uint256 _payback);
 

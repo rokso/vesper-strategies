@@ -9,7 +9,7 @@ import {IComet} from "contracts/strategies/compound/v3/CompoundV3.sol";
 import {StrategyBorrow_Rebalance_Test} from "test/StrategyBorrow.rebalance.t.sol";
 import {Strategy_Withdraw_Test} from "test/Strategy.withdraw.t.sol";
 import {Strategy_Rebalance_Test} from "test/Strategy.rebalance.t.sol";
-import {SWAPPER, vaLINK, cUSDCv3, USDC, vaUSDC} from "test/helpers/Address.ethereum.sol";
+import {SWAPPER, vaLINK, COMP, rewards, cUSDCv3, USDC, vaUSDC} from "test/helpers/Address.ethereum.sol";
 import {deinitialize} from "test/helpers/Functions.sol";
 
 contract CompoundV3VesperBorrow_Ethereum_Test is
@@ -27,7 +27,16 @@ contract CompoundV3VesperBorrow_Ethereum_Test is
 
         strategy = new CompoundV3VesperBorrow();
         deinitialize(address(strategy));
-        CompoundV3VesperBorrow(payable(address(strategy))).initialize(vaLINK, SWAPPER, cUSDCv3, USDC, vaUSDC, "");
+        CompoundV3VesperBorrow(payable(address(strategy))).initialize(
+            vaLINK,
+            SWAPPER,
+            rewards,
+            COMP,
+            cUSDCv3,
+            USDC,
+            vaUSDC,
+            ""
+        );
     }
 
     function _makeLoss(uint256 loss) internal override {

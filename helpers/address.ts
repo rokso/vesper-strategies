@@ -21,6 +21,7 @@ const A = {
     STG: "0xAf5191B0De278C7286d6C7CC6ab6BB8A73bA2Cd6",
     FRAX: "0x853d955aCEf822Db058eb8505911ED77F175b99e",
     CRV: "0xD533a949740bb3306d119CC777fa900bA034cd52",
+    CVX: "0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B",
     Aave: {
       stkAave: "0x4da27a545c0c5B758a6BA100e3a049001de870f5",
       V3: {
@@ -33,6 +34,7 @@ const A = {
     Compound: {
       V3: {
         cUSDCv3: "0xc3d688B66703497DAA19211EEdff47f25384cdc3",
+        rewards: "0x1B0e765F6224C21223AeA2af16c1C46E38885a40",
       },
     },
     Convex: {

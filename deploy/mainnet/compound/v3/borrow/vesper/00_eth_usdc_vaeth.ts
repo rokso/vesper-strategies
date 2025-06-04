@@ -15,6 +15,8 @@ const func: DeployFunction = async function () {
       initializeArgs: [
         Address.Vesper.vaETH,
         Address.swapper,
+        Address.Compound.V3.rewards,
+        Address.COMP,
         Address.Compound.V3.cUSDCv3,
         Address.USDC,
         Address.Vesper.vaUSDC,

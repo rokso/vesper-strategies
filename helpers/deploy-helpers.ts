@@ -107,4 +107,8 @@ export const deployAndConfigureStrategy = async (deployParams: DeployParams, con
   }
 
   await addStrategy(hre, alias, strategyAddress, configParams);
+
+  if (!["hardhat", "localhost"].includes(hre.network.name)) {
+    await hre.run("verify:verify", { address: strategyAddress });
+  }
 };

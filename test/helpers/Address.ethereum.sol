@@ -29,6 +29,7 @@ address constant CURVE_ynETHx_ETH_POOL = 0xD65ed4BcE447195187f37cE7D82f56AdF1826
 
 // Compound V3
 address constant cUSDCv3 = 0xc3d688B66703497DAA19211EEdff47f25384cdc3;
+address constant cWETHv3 = 0xA17581A9E3356d9A858b789D68B4d866e593aE94;
 address constant rewards = 0x1B0e765F6224C21223AeA2af16c1C46E38885a40;
 
 // Vesper

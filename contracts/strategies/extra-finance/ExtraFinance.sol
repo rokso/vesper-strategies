@@ -2,10 +2,14 @@
 
 pragma solidity 0.8.25;
 
-import "../Strategy.sol";
-import "../../interfaces/extra-finance/ILendingPool.sol";
-import "../../interfaces/extra-finance/IEToken.sol";
-import "../../interfaces/extra-finance/IStakingRewards.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {Strategy} from "../Strategy.sol";
+import {IVesperPool} from "../../interfaces/vesper/IVesperPool.sol";
+import {ILendingPool} from "../../interfaces/extra-finance/ILendingPool.sol";
+import {IEToken} from "../../interfaces/extra-finance/IEToken.sol";
+import {IStakingRewards} from "../../interfaces/extra-finance/IStakingRewards.sol";
 
 /// @title This strategy will deposit collateral token in Extra Finance and earn interest.
 contract ExtraFinance is Strategy {

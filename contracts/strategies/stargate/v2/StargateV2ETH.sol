@@ -2,13 +2,11 @@
 
 pragma solidity 0.8.25;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {Strategy} from "../../Strategy.sol";
 import {IWETH} from "../../../interfaces/IWETH.sol";
-import {IVesperPool} from "../../../interfaces/vesper/IVesperPool.sol";
 import {IStargatePoolV2 as IStargatePool} from "../../../interfaces/stargate/v2/IStargatePoolV2.sol";
 import {IStargateStaking} from "../../../interfaces/stargate/v2/IStargateStaking.sol";
 import {StargateV2} from "./StargateV2.sol";

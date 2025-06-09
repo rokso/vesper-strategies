@@ -19,6 +19,7 @@ abstract contract FraxlendV1Borrow is Strategy {
     using SafeERC20 for IERC20;
 
     error CollateralMismatch();
+    error InvalidInput();
     error InvalidMaxBorrowLimit();
     error InvalidSlippage();
     error MaxShouldBeHigherThanMin();
@@ -179,7 +180,7 @@ abstract contract FraxlendV1Borrow is Strategy {
         uint256 depositAmount_,
         uint256 withdrawAmount_
     ) private view returns (uint256 _borrowAmount, uint256 _repayAmount) {
-        require(depositAmount_ == 0 || withdrawAmount_ == 0, "all-input-gt-zero");
+        if (depositAmount_ != 0 && withdrawAmount_ != 0) revert InvalidInput();
 
         IFraxlendPair _fraxlendPair = fraxlendPair();
         uint256 _borrowed = _fraxlendPair.toBorrowAmount(_fraxlendPair.userBorrowShares(address(this)), true);

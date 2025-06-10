@@ -94,7 +94,7 @@ async function createReleaseFor(network: string, release: string) {
 }
 
 task("create-release", "Create release file from deploy data")
-  .addParam("release", "Odyssey release semantic version, i.e 1.2.3")
+  .addParam("release", "vesper-strategies release semantic version, i.e 1.2.3")
   .setAction(async function ({ release }) {
     const networks = fs.readdirSync(`./deployments/`).filter((n) => n != "localhost");
 

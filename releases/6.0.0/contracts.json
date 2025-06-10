@@ -1,0 +1,12 @@
+{
+  "version": "6.0.0",
+  "networks": {
+    "mainnet": {
+      "CompoundV3_ETH_vETH": "0x082E014b25dECc6bA5f2e421E90921B381Ce1416",
+      "CompoundV3_ETH_vETH_Proxy": "0x082E014b25dECc6bA5f2e421E90921B381Ce1416",
+      "CompoundV3_Implementation": "0x5460470ebf04Af92993c10eEdD6480e76618a7f7",
+      "CompoundV3_USDC_vUSDC": "0xEe2b64D950f38A338129196a4be4Dfd359cCDc69",
+      "CompoundV3_USDC_vUSDC_Proxy": "0xEe2b64D950f38A338129196a4be4Dfd359cCDc69"
+    }
+  }
+}

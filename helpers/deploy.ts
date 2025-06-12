@@ -2,7 +2,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployResult, type Deployment } from "hardhat-deploy/types";
 import { executeOrStoreTxIfMultisig } from "./deploy-helpers";
-import { makeValidateUpgrade } from "@openzeppelin/hardhat-upgrades/dist/validate-upgrade";
+import { upgrades } from "hardhat";
 
 // See `ERC1967Utils.sol` lib
 const IMPLEMENTATION_SLOT = "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
@@ -27,7 +27,7 @@ const validateUpgrade = async (
   );
   const newImplFactory = await hre.ethers.getContractFactory(contract);
   // If new storage layout is incompatible then it will throw error
-  await makeValidateUpgrade(hre)(oldImplFactory, newImplFactory, {
+  await upgrades.validateUpgrade(oldImplFactory, newImplFactory, {
     kind: "uups",
   });
 };
@@ -99,10 +99,6 @@ export const deploy = async (hre: HardhatRuntimeEnvironment, params: DeployParam
       address: proxyDeployment.address,
       implementation: implementationAddress,
     });
-
-    if (!["hardhat", "localhost"].includes(hre.network.name)) {
-      await hre.run("verify:verify", { address: proxyDeployment.address, constructorArguments: constructorArgs });
-    }
 
     return { ...proxyDeployment, newlyDeployed: true };
   }

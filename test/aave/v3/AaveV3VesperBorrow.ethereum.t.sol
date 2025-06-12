@@ -24,7 +24,7 @@ contract AaveV3VesperBorrow_Ethereum_Test is
     }
 
     function _setUp() internal override {
-        vm.createSelectFork({urlOrAlias: "ethereum"});
+        super.createSelectFork("ethereum");
 
         address _borrowToken = USDC;
         strategy = new AaveV3VesperBorrow();

@@ -15,7 +15,7 @@ contract Convex_Ethereum_eUSD_USDC_Test is Convex_Test {
     }
 
     function _setUp() internal override {
-        vm.createSelectFork({urlOrAlias: "ethereum"});
+        super.createSelectFork("ethereum");
 
         CurveBase.CurveInitParams memory params = CurveBase.CurveInitParams({
             pool: vaUSDC,
@@ -44,7 +44,7 @@ contract Convex_Ethereum_ynETHx_ETH_Test is Convex_Test {
     }
 
     function _setUp() internal override {
-        vm.createSelectFork({urlOrAlias: "ethereum"});
+        super.createSelectFork("ethereum");
 
         CurveBase.CurveInitParams memory params = CurveBase.CurveInitParams({
             pool: vaETH,

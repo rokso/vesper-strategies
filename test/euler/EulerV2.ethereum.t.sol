@@ -16,7 +16,7 @@ contract EulerV2_Ethereum_Test is Strategy_Withdraw_Test, Strategy_Rebalance_Tes
     }
 
     function _setUp() internal override {
-        vm.createSelectFork({urlOrAlias: "ethereum"});
+        super.createSelectFork("ethereum");
 
         strategy = new EulerV2();
         deinitialize(address(strategy));

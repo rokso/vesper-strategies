@@ -38,6 +38,17 @@ abstract contract Strategy_Test is Test {
         console.log("running fork from block", block.number);
     }
 
+    /// @dev If fork is not active then create and select fork.
+    /// If tests are invoked as "forge test --fork-url node_url" then there is
+    /// an active fork already and we want to respect that.
+    function createSelectFork(string memory urlOrAlias) public returns (uint256 forkId) {
+        try vm.activeFork() returns (uint256 _forkId) {
+            return _forkId;
+        } catch {
+            return vm.createSelectFork(urlOrAlias);
+        }
+    }
+
     function _mockVesperPool() private {
         address _poolAddress = address(strategy.pool());
 

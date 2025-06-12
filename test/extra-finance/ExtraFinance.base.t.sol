@@ -17,7 +17,7 @@ contract ExtraFinance_Ethereum_Test is Strategy_Withdraw_Test, Strategy_Rebalanc
     }
 
     function _setUp() internal override {
-        vm.createSelectFork({urlOrAlias: "base"});
+        super.createSelectFork("base");
 
         strategy = new ExtraFinance();
         deinitialize(address(strategy));

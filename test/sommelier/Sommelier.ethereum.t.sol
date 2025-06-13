@@ -17,7 +17,7 @@ contract Sommelier_Ethereum_Test is Strategy_Withdraw_Test, Strategy_Rebalance_T
     }
 
     function _setUp() internal override {
-        vm.createSelectFork({urlOrAlias: "ethereum"});
+        super.createSelectFork("ethereum");
 
         strategy = new Sommelier();
         deinitialize(address(strategy));

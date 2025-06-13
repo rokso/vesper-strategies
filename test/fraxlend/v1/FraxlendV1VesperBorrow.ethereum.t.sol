@@ -18,7 +18,7 @@ contract FraxlendV1VesperBorrow_Ethereum_Test is
     StrategyBorrow_Rebalance_Test
 {
     function _setUp() internal override {
-        vm.createSelectFork({urlOrAlias: "ethereum"});
+        super.createSelectFork("ethereum");
 
         strategy = new FraxlendV1VesperBorrow();
         deinitialize(address(strategy));

@@ -11,7 +11,7 @@ import {deinitialize} from "test/helpers/Functions.sol";
 
 contract FraxlendV3_Ethereum_Test is Strategy_Withdraw_Test, Strategy_Rebalance_Test {
     function _setUp() internal override {
-        vm.createSelectFork({urlOrAlias: "ethereum"});
+        super.createSelectFork("ethereum");
 
         strategy = new FraxlendV3();
         deinitialize(address(strategy));

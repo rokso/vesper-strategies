@@ -10,7 +10,7 @@ import {deinitialize} from "test/helpers/Functions.sol";
 
 contract CompoundV3_Ethereum_ETH_Test is CompoundV3_Test {
     function _setUp() internal override {
-        vm.createSelectFork({urlOrAlias: "ethereum"});
+        super.createSelectFork("ethereum");
 
         strategy = new CompoundV3();
         deinitialize(address(strategy));
@@ -20,7 +20,7 @@ contract CompoundV3_Ethereum_ETH_Test is CompoundV3_Test {
 
 contract CompoundV3_Ethereum_USDC_Test is CompoundV3_Test {
     function _setUp() internal override {
-        vm.createSelectFork({urlOrAlias: "ethereum"});
+        super.createSelectFork("ethereum");
 
         strategy = new CompoundV3();
         deinitialize(address(strategy));

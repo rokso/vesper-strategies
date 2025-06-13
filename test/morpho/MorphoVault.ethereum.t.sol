@@ -11,7 +11,7 @@ import {deinitialize} from "test/helpers/Functions.sol";
 
 contract MorphoVault_Ethereum_Test is Strategy_Withdraw_Test, Strategy_Rebalance_Test {
     function _setUp() internal override {
-        vm.createSelectFork({urlOrAlias: "ethereum"});
+        super.createSelectFork("ethereum");
 
         strategy = new MorphoVault();
         deinitialize(address(strategy));

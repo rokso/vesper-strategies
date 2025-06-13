@@ -17,7 +17,7 @@ contract AaveV3_Ethereum_Test is Strategy_Withdraw_Test, Strategy_Rebalance_Test
     }
 
     function _setUp() internal override {
-        vm.createSelectFork({urlOrAlias: "ethereum"});
+        super.createSelectFork("ethereum");
 
         strategy = new AaveV3();
         deinitialize(address(strategy));

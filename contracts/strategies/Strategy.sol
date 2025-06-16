@@ -259,17 +259,18 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
      * @param amount_ Amount of collateral token
      */
     function withdraw(uint256 amount_) external override onlyPool {
-        StrategyStorage storage $ = _getStrategyStorage();
-        IERC20 _collateralToken = $._collateralToken;
-        address _pool = $._pool;
-        uint256 _collateralHere = _collateralToken.balanceOf(address(this));
-        if (_collateralHere >= amount_) {
-            _collateralToken.safeTransfer(_pool, amount_);
+        IVesperPool _pool = pool();
+        // In most cases _token and $._collateralToken are same but in case of
+        // vastETH pool they can be different, stETH and wstETH respectively.
+        IERC20 _token = _pool.token();
+        uint256 _tokensHere = _token.balanceOf(address(this));
+        if (_tokensHere >= amount_) {
+            _token.safeTransfer(address(_pool), amount_);
         } else {
-            _withdrawHere(amount_ - _collateralHere);
+            _withdrawHere(amount_ - _tokensHere);
             // Do not assume _withdrawHere() will withdraw exact amount. Check balance again and transfer to pool
-            _collateralHere = _collateralToken.balanceOf(address(this));
-            _collateralToken.safeTransfer(_pool, Math.min(amount_, _collateralHere));
+            _tokensHere = _token.balanceOf(address(this));
+            _token.safeTransfer(address(_pool), Math.min(amount_, _tokensHere));
         }
     }
 

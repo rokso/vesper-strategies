@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.8.25;
+import {IMasterOracle} from "contracts/interfaces/one-oracle/IMasterOracle.sol";
 
 /**
  * @notice Swapper interface
@@ -26,6 +27,8 @@ interface ISwapper {
      * @dev It shouldn't be used as oracle!!!
      */
     function getAmountOut(address tokenIn_, address tokenOut_, uint256 amountIn_) external returns (uint256 _amountOut);
+
+    function masterOracle() external view returns (IMasterOracle);
 
     /**
      * @notice Perform an exact input swap - will revert if there is no default routing

@@ -2,6 +2,8 @@
 pragma solidity ^0.8.0;
 
 import {IERC20, IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {IMasterOracle} from "contracts/interfaces/one-oracle/IMasterOracle.sol";
 import {Strategy_Test} from "./Strategy.t.sol";
 
 interface IBorrowStrategy {
@@ -87,6 +89,19 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
 
     function _getMaxBorrowableInCollateral() internal view virtual returns (uint256);
 
+    function _getBorrowable() internal view virtual returns (uint256) {
+        IMasterOracle _oracle = strategy.swapper().masterOracle();
+        // In case of high value collateralToken and low value borrowToken
+        // _borrowable can be huge, so cap it to max 100.
+        uint256 _borrowable = _oracle.quote(
+            address(strategy.collateralToken()),
+            IBorrowStrategy(address(strategy)).borrowToken(),
+            _getMaxBorrowableInCollateral()
+        );
+
+        return Math.min(_borrowable, parseBorrowAmount(100));
+    }
+
     function _getTotalBorrowBalance() internal view returns (uint256) {
         return _getBorrowDeposit() + _getBorrowBalance();
     }
@@ -136,7 +151,7 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
 
     function test_utils() external {
         _increaseCollateralBalance(parseAmount(100));
-        assertEq(_getCollateralBalance(), parseAmount(100), "collateral balance (1)");
+        assertApproxEqAbs(_getCollateralBalance(), parseAmount(100), 1, "collateral balance (1)");
 
         _depositCollateral(parseAmount(10));
 
@@ -146,23 +161,26 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
 
         assertEq(_getCollateralBalance(), parseAmount(40), "collateral balance (3)");
         assertApproxEqAbs(_getCollateralDeposit(), parseAmount(60), 1, "collateral deposit (1)");
+        uint256 _borrowAmount = _getBorrowable();
+        _borrow(_borrowAmount);
 
-        _borrow(parseBorrowAmount(100));
+        assertApproxEqAbs(_getBorrowDebt(), _borrowAmount, 1, "borrow debt (1)");
+        assertEq(_getBorrowBalance(), _borrowAmount, "borrow balance (1)");
 
-        assertApproxEqAbs(_getBorrowDebt(), parseBorrowAmount(100), 1, "borrow debt (1)");
-        assertEq(_getBorrowBalance(), parseBorrowAmount(100), "borrow balance (1)");
+        uint256 _repayAmount = _borrowAmount / 2; // repay half of borrow
+        _repay(_repayAmount);
 
-        _repay(parseBorrowAmount(50));
+        assertApproxEqAbs(_getBorrowDebt(), _repayAmount, 2, "borrow debt (2)");
+        assertApproxEqAbs(_getBorrowBalance(), _repayAmount, 1, "borrow balance (2)");
 
-        assertApproxEqAbs(_getBorrowDebt(), parseBorrowAmount(50), 2, "borrow debt (2)");
-        assertApproxEqAbs(_getBorrowBalance(), parseBorrowAmount(50), 1, "borrow balance (2)");
-
-        _depositBorrow(parseBorrowAmount(50));
+        // Borrowed X and then repaid Y, so remaining in strategy is X-Y. This can be deposited in end protocol.
+        uint256 _depositBorrowAmount = _borrowAmount - _repayAmount;
+        _depositBorrow(_depositBorrowAmount);
 
         assertApproxEqAbs(_getBorrowBalance(), 0, 1, "borrow balance (3)");
-        assertApproxEqAbs(_getBorrowDeposit(), parseBorrowAmount(50), 1, "borrow deposit (1)");
+        assertApproxEqAbs(_getBorrowDeposit(), _depositBorrowAmount, 1, "borrow deposit (1)");
 
-        _withdrawBorrow(parseBorrowAmount(50));
+        _withdrawBorrow(_depositBorrowAmount);
         // Adjust for loss in borrow without this repay all will not be possible
         _adjustBorrowForNoLoss();
         // Repay all so that we can withdraw all in next step
@@ -188,9 +206,9 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
         _tvl = strategy.tvl();
 
         assertEq(token().balanceOf(address(pool)), 0, "given: balance of pool is zero");
-        assertApproxEqRel(_tvl, initial, MAX_DEPOSIT_SLIPPAGE_REL, "given: tvl ~eq target");
-        assertEq(_tvl, _getCollateralDeposit(), "given: tvl ~eq collateral deposit");
-        assertEq(_getCollateralBalance(), 0, "given: no collateral balance");
+        assertApproxEqRel(_tvl, _getWrappedAmount(initial), MAX_DEPOSIT_SLIPPAGE_REL, "given: tvl ~eq target");
+        assertApproxEqAbs(_tvl, _getCollateralDeposit(), 1, "given: tvl ~eq collateral deposit");
+        assertApproxEqAbs(_getCollateralBalance(), 0, 1, "given: no collateral balance");
         assertEq(_getBorrowBalance(), 0, "given: no borrow balance");
 
         pool.updateDebtOfStrategy({target_: initial, latest_: initial});
@@ -207,10 +225,10 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
 
         // then
         assertApproxEqRel(strategy.tvl(), _tvlBefore, MAX_DEPOSIT_SLIPPAGE_REL, "tvl after rebalance");
-        assertEq(_getCollateralBalance(), 0, "collateral balance of strategy after rebalance");
+        assertApproxEqAbs(_getCollateralBalance(), 0, 1, "collateral balance of strategy after rebalance");
         assertEq(_getBorrowBalance(), 0, "borrow balance of strategy after rebalance");
         assertApproxEqRel(
-            token().balanceOf(address(pool)),
+            _getWrappedAmount(token().balanceOf(address(pool))),
             _profit,
             MAX_DEPOSIT_SLIPPAGE_REL,
             "profit goes to the pool after rebalance"
@@ -227,10 +245,10 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
 
         // then
         assertApproxEqRel(strategy.tvl(), _tvlBefore, MAX_DEPOSIT_SLIPPAGE_REL, "tvl after rebalance");
-        assertEq(_getCollateralBalance(), 0, "collateral balance of strategy after rebalance");
+        assertApproxEqAbs(_getCollateralBalance(), 0, 1, "collateral balance of strategy after rebalance");
         assertEq(_getBorrowBalance(), 0, "borrow balance of strategy after rebalance");
         assertApproxEqRel(
-            token().balanceOf(address(pool)),
+            _getWrappedAmount(token().balanceOf(address(pool))),
             _profit,
             MAX_DEPOSIT_SLIPPAGE_REL,
             "profit goes to the pool after rebalance"
@@ -252,7 +270,7 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
 
         // then
         assertApproxEqRel(strategy.tvl(), _tvlBefore - _lossInCollateral, 0.015e18, "tvl after rebalance");
-        assertEq(_getCollateralBalance(), 0, "collateral balance of strategy after rebalance");
+        assertApproxEqAbs(_getCollateralBalance(), 0, 1, "collateral balance of strategy after rebalance");
         assertEq(_getBorrowBalance(), 0, "borrow balance of strategy after rebalance");
         assertEq(token().balanceOf(address(pool)), 0, "no profit goes to the pool after rebalance");
     }
@@ -267,7 +285,7 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
 
         // then
         assertApproxEqRel(strategy.tvl(), _tvlBefore, MAX_DEPOSIT_SLIPPAGE_REL, "tvl after rebalance");
-        assertEq(_getCollateralBalance(), 0, "collateral balance of strategy after rebalance");
+        assertApproxEqAbs(_getCollateralBalance(), 0, 1, "collateral balance of strategy after rebalance");
         assertEq(_getBorrowBalance(), 0, "borrow balance of strategy after rebalance");
         assertGt(token().balanceOf(address(pool)), 0, "profit goes to the pool after rebalance");
     }
@@ -282,7 +300,7 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
 
         // then
         assertApproxEqRel(strategy.tvl(), _tvlBefore, MAX_DEPOSIT_SLIPPAGE_REL, "tvl after rebalance");
-        assertEq(_getCollateralBalance(), 0, "collateral balance of strategy after rebalance");
+        assertApproxEqAbs(_getCollateralBalance(), 0, 1, "collateral balance of strategy after rebalance");
         assertEq(_getBorrowBalance(), 0, "borrow balance of strategy after rebalance");
         assertGt(token().balanceOf(address(pool)), 0, "profit goes to the pool after rebalance");
     }
@@ -298,7 +316,7 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
 
         // then
         assertApproxEqRel(strategy.tvl(), _tvlBefore - _loss, MAX_WITHDRAW_SLIPPAGE_REL, "tvl after rebalance");
-        assertEq(_getCollateralBalance(), 0, "collateral balance of strategy after rebalance");
+        assertApproxEqAbs(_getCollateralBalance(), 0, 1, "collateral balance of strategy after rebalance");
         assertEq(_getBorrowBalance(), 0, "borrow balance of strategy after rebalance");
         assertEq(token().balanceOf(address(pool)), 0, "balance of pool after rebalance");
     }
@@ -313,7 +331,7 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
 
         // then
         assertApproxEqRel(strategy.tvl(), _tvlBefore - _loss, MAX_WITHDRAW_SLIPPAGE_REL, "tvl after rebalance");
-        assertEq(_getCollateralBalance(), 0, "collateral balance of strategy after rebalance");
+        assertApproxEqAbs(_getCollateralBalance(), 0, 1, "collateral balance of strategy after rebalance");
         assertEq(_getBorrowBalance(), 0, "borrow balance of strategy after rebalance");
         assertEq(token().balanceOf(address(pool)), 0, "balance of pool after rebalance");
     }
@@ -332,10 +350,10 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
 
         // then
         assertApproxEqRel(strategy.tvl(), _tvlBefore, MAX_WITHDRAW_SLIPPAGE_REL, "tvl after rebalance");
-        assertEq(_getCollateralBalance(), 0, "collateral balance of strategy after rebalance");
+        assertApproxEqAbs(_getCollateralBalance(), 0, 1, "collateral balance of strategy after rebalance");
         assertEq(_getBorrowBalance(), 0, "borrow balance of strategy after rebalance");
         assertApproxEqRel(
-            token().balanceOf(address(pool)),
+            _getWrappedAmount(token().balanceOf(address(pool))),
             _profitInCollateral,
             0.02e18,
             "balance of pool after rebalance"
@@ -357,7 +375,7 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
 
         // then
         assertApproxEqRel(strategy.tvl(), _tvlBefore - _lossInCollateral, 0.015e18, "tvl after rebalance");
-        assertEq(_getCollateralBalance(), 0, "collateral balance of strategy after rebalance");
+        assertApproxEqAbs(_getCollateralBalance(), 0, 1, "collateral balance of strategy after rebalance");
         assertEq(_getBorrowBalance(), 0, "borrow balance of strategy after rebalance");
         assertEq(token().balanceOf(address(pool)), 0, "balance of pool after rebalance");
     }
@@ -376,7 +394,7 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
 
         // then
         assertApproxEqRel(strategy.tvl(), _tvlBefore - _lossInCollateral, 0.015e18, "tvl after rebalance");
-        assertEq(_getCollateralBalance(), 0, "collateral balance of strategy after rebalance");
+        assertApproxEqAbs(_getCollateralBalance(), 0, 1, "collateral balance of strategy after rebalance");
         assertEq(_getBorrowBalance(), 0, "borrow balance of strategy after rebalance");
         assertEq(token().balanceOf(address(pool)), 0, "balance of pool after rebalance");
     }
@@ -396,7 +414,7 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
 
         // then
         assertApproxEqRel(strategy.tvl(), _tvlBefore - _lossInCollateral, 0.015e18, "tvl after rebalance");
-        assertEq(_getCollateralBalance(), 0, "collateral balance of strategy after rebalance");
+        assertApproxEqAbs(_getCollateralBalance(), 0, 1, "collateral balance of strategy after rebalance");
         assertEq(_getBorrowBalance(), 0, "borrow balance of strategy after rebalance");
         assertEq(token().balanceOf(address(pool)), 0, "no profit goes to the pool after rebalance");
         assertLt(_getBorrowDebt(), _debtBefore, "debt after rebalance");
@@ -417,10 +435,10 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
 
         // then
         assertApproxEqRel(strategy.tvl(), _tvlBefore, MAX_WITHDRAW_SLIPPAGE_REL, "tvl after rebalance");
-        assertEq(_getCollateralBalance(), 0, "collateral balance of strategy after rebalance");
+        assertApproxEqAbs(_getCollateralBalance(), 0, 1, "collateral balance of strategy after rebalance");
         assertEq(_getBorrowBalance(), 0, "borrow balance of strategy after rebalance");
         assertApproxEqRel(
-            token().balanceOf(address(pool)),
+            _getWrappedAmount(token().balanceOf(address(pool))),
             _profitInCollateral,
             0.02e18,
             "balance of pool after rebalance"

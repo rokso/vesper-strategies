@@ -87,11 +87,11 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
     }
 
     modifier onlyPool() {
-        if (msg.sender != pool()) revert Unauthorized();
+        if (msg.sender != address(pool())) revert Unauthorized();
         _;
     }
 
-    function collateralToken() public view override returns (IERC20) {
+    function collateralToken() public view virtual override returns (IERC20) {
         return _getStrategyStorage()._collateralToken;
     }
 
@@ -100,11 +100,11 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
     }
 
     function governor() public view returns (address) {
-        return IVesperPool(pool()).governor();
+        return pool().governor();
     }
 
     function isActive() external view override returns (bool) {
-        (bool _isActive, , , , , , , , ) = IVesperPool(pool()).strategy(address(this));
+        (bool _isActive, , , , , , , , ) = pool().strategy(address(this));
         return _isActive;
     }
 
@@ -122,12 +122,12 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
         return _getStrategyStorage()._name;
     }
 
-    function pool() public view override returns (address) {
-        return _getStrategyStorage()._pool;
+    function pool() public view override returns (IVesperPool) {
+        return IVesperPool(_getStrategyStorage()._pool);
     }
 
     function poolAccountant() external view returns (address) {
-        return IVesperPool(pool()).poolAccountant();
+        return pool().poolAccountant();
     }
 
     function swapper() public view returns (ISwapper) {
@@ -142,7 +142,7 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
     function tvl() external view virtual returns (uint256);
 
     function VERSION() external pure virtual override returns (string memory) {
-        return "6.0.0";
+        return "6.0.1";
     }
 
     /**
@@ -307,6 +307,5 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
         }
     }
 
-    // These methods must be implemented by the inheriting strategy
     function _withdrawHere(uint256 amount_) internal virtual;
 }

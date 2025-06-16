@@ -99,7 +99,7 @@ contract CompoundV3 is Strategy {
      * @dev Generate report for pools accounting and also send profit and any payback to pool.
      */
     function _rebalance() internal override returns (uint256 _profit, uint256 _loss, uint256 _payback) {
-        IVesperPool _pool = IVesperPool(pool());
+        IVesperPool _pool = pool();
         uint256 _excessDebt = _pool.excessDebt(address(this));
         uint256 _totalDebt = _pool.totalDebtOf(address(this));
 
@@ -121,7 +121,7 @@ contract CompoundV3 is Strategy {
         // Make sure _collateralHere >= _payback + profit. set actual payback first and then profit
         _payback = Math.min(_collateralHere, _excessDebt);
         _profit = _collateralHere > _payback ? Math.min((_collateralHere - _payback), _profit) : 0;
-        IVesperPool(_pool).reportEarning(_profit, _loss, _payback);
+        _pool.reportEarning(_profit, _loss, _payback);
         // After reportEarning strategy may get more collateral from pool. Deposit those in Compound.
         _deposit(_collateralToken.balanceOf(address(this)));
     }

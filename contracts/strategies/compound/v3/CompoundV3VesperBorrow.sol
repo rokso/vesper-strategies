@@ -4,6 +4,7 @@ pragma solidity 0.8.25;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IVesperPool} from "../../../interfaces/vesper/IVesperPool.sol";
 import {VesperRewards} from "../../VesperRewards.sol";
 import {CompoundV3Borrow} from "./CompoundV3Borrow.sol";
@@ -12,7 +13,7 @@ import {CompoundV3Borrow} from "./CompoundV3Borrow.sol";
 contract CompoundV3VesperBorrow is CompoundV3Borrow {
     using SafeERC20 for IERC20;
 
-    error InvalidGrowPool();
+    error InvalidVesperPool();
 
     /// @custom:storage-location erc7201:vesper.storage.Strategy.CompoundV3VesperBorrow
     struct CompoundV3VesperBorrowStorage {
@@ -41,7 +42,7 @@ contract CompoundV3VesperBorrow is CompoundV3Borrow {
         string memory name_
     ) external initializer {
         __CompoundV3Borrow_init(pool_, swapper_, compRewards_, rewardToken_, comet_, borrowToken_, name_);
-        if (address(IVesperPool(vPool_).token()) != borrowToken()) revert InvalidGrowPool();
+        if (address(IVesperPool(vPool_).token()) != borrowToken_) revert InvalidVesperPool();
         _getCompoundV3VesperBorrowStorage()._vPool = IVesperPool(vPool_);
     }
 
@@ -88,8 +89,7 @@ contract CompoundV3VesperBorrow is CompoundV3Borrow {
         uint256 _pricePerShare = _vPool.pricePerShare();
         uint256 _shares = (amount_ * 1e18) / _pricePerShare;
         _shares = amount_ > ((_shares * _pricePerShare) / 1e18) ? _shares + 1 : _shares;
-        uint256 _maxShares = _vPool.balanceOf(address(this));
-        _shares = _shares > _maxShares ? _maxShares : _shares;
+        _shares = Math.min(_shares, _vPool.balanceOf(address(this)));
         if (_shares > 0) {
             _vPool.withdraw(_shares);
         }

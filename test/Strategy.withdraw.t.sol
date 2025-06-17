@@ -12,14 +12,19 @@ abstract contract Strategy_Withdraw_Test is Strategy_Test {
         uint256 amount = _poolInitialAmount();
 
         deal(address(token()), address(strategy), amount);
-        assertEq(token().balanceOf(address(pool)), 0, "balance of pool before withdraw");
-        assertEq(strategy.tvl(), amount, "tvl before withdraw");
+        assertApproxEqAbs(token().balanceOf(address(pool)), 0, 1, "balance of pool before withdraw");
+        assertApproxEqAbs(strategy.tvl(), _getWrappedAmount(amount), 5, "tvl before withdraw");
 
         vm.prank(address(pool));
-        strategy.withdraw(amount);
+        strategy.withdraw(amount - MAX_DUST_LEFT_IN_PROTOCOL_AFTER_WITHDRAW_ABS);
 
-        assertEq(token().balanceOf(address(pool)), amount, "balance of pool after withdraw");
-        assertEq(strategy.tvl(), 0, "tvl after withdraw");
+        assertApproxEqAbs(
+            token().balanceOf(address(pool)),
+            amount,
+            MAX_DUST_LEFT_IN_PROTOCOL_AFTER_WITHDRAW_ABS,
+            "balance of pool after withdraw"
+        );
+        assertApproxEqAbs(strategy.tvl(), 0, MAX_DUST_LEFT_IN_PROTOCOL_AFTER_WITHDRAW_ABS, "tvl after withdraw");
     }
 
     function test_withdraw_some_fromDeposit() public {
@@ -33,8 +38,8 @@ abstract contract Strategy_Withdraw_Test is Strategy_Test {
 
         uint256 tvl = strategy.tvl();
 
-        assertApproxEqRel(tvl, amount, MAX_DEPOSIT_SLIPPAGE_REL, "tvl after rebalance");
-        assertEq(token().balanceOf(address(strategy)), 0, "balance of strategy after rebalance");
+        assertApproxEqRel(tvl, _getWrappedAmount(amount), MAX_DEPOSIT_SLIPPAGE_REL, "tvl after rebalance");
+        assertApproxEqAbs(token().balanceOf(address(strategy)), 0, 1, "balance of strategy after rebalance");
 
         _waitForUnlockTime();
 
@@ -50,7 +55,12 @@ abstract contract Strategy_Withdraw_Test is Strategy_Test {
             MAX_WITHDRAW_SLIPPAGE_REL,
             "balance of pool after withdraw"
         );
-        assertApproxEqRel(strategy.tvl(), amountToWithdraw, MAX_WITHDRAW_SLIPPAGE_REL, "tvl after withdraw");
+        assertApproxEqRel(
+            strategy.tvl(),
+            tvl - _getWrappedAmount(amountToWithdraw),
+            MAX_WITHDRAW_SLIPPAGE_REL,
+            "tvl after withdraw"
+        );
     }
 
     function test_withdraw_all_fromDeposit() public {
@@ -64,18 +74,18 @@ abstract contract Strategy_Withdraw_Test is Strategy_Test {
 
         uint256 tvl = strategy.tvl();
 
-        assertApproxEqRel(tvl, amount, MAX_DEPOSIT_SLIPPAGE_REL, "tvl after rebalance");
-        assertEq(token().balanceOf(address(strategy)), 0, "balance of strategy after rebalance");
+        assertApproxEqRel(tvl, _getWrappedAmount(amount), MAX_DEPOSIT_SLIPPAGE_REL, "tvl after rebalance");
+        assertApproxEqAbs(token().balanceOf(address(strategy)), 0, 1, "balance of strategy after rebalance");
 
         _waitForUnlockTime();
         // Allow to adjust borrow position before withdrawal of whole TVL
         _rebalanceBorrow();
 
         vm.prank(address(pool));
-        strategy.withdraw(tvl);
+        strategy.withdraw(amount);
 
         assertApproxEqRel(
-            token().balanceOf(address(pool)),
+            _getWrappedAmount(token().balanceOf(address(pool))),
             tvl,
             MAX_WITHDRAW_SLIPPAGE_REL,
             "balance of pool after withdraw"

@@ -69,6 +69,10 @@ abstract contract Strategy_Test is Test {
         return amount * 10 ** IERC20Metadata(address(token())).decimals();
     }
 
+    function _getWrappedAmount(uint256 amount) internal view virtual returns (uint256) {
+        return amount;
+    }
+
     function _waitForUnlockTime() internal virtual {}
 
     function _rebalance() internal virtual {

@@ -8,7 +8,7 @@ import {IMasterOracle} from "contracts/interfaces/one-oracle/IMasterOracle.sol";
 
 contract SwapperMock is ISwapper, Test {
     uint256 slippage;
-    IMasterOracle masterOracle;
+    IMasterOracle public masterOracle;
 
     function updateSlippage(uint256 slippage_) external {
         slippage = slippage_;

@@ -44,7 +44,6 @@ abstract contract AaveV3Borrow is Strategy {
         address _borrowToken;
         IAToken _vdToken; // variable debt token
         address _aBorrowToken;
-        IERC20 _wrappedCollateral;
         uint256 _minBorrowLimit;
         uint256 _maxBorrowLimit;
         uint256 _slippage;
@@ -85,7 +84,6 @@ abstract contract AaveV3Borrow is Strategy {
         $._borrowToken = borrowToken_;
         $._vdToken = IAToken(_vdToken);
         $._aBorrowToken = _aBorrowToken;
-        $._wrappedCollateral = _wrappedCollateral;
 
         $._minBorrowLimit = 7_000; // 70% of actual collateral factor of protocol
         $._maxBorrowLimit = 8_500; // 85% of actual collateral factor of protocol
@@ -131,7 +129,7 @@ abstract contract AaveV3Borrow is Strategy {
     }
 
     function wrappedCollateral() public view returns (IERC20) {
-        return _getAaveV3BorrowStorage()._wrappedCollateral;
+        return _getWrappedToken(collateralToken());
     }
 
     /// @dev It will make adjustment to maintain safe borrow position.

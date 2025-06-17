@@ -16,34 +16,34 @@ contract AaveV3SommelierBorrow is AaveV3Borrow, SommelierBase {
     error InvalidSommelierVault();
 
     function initialize(
-        address _pool,
-        address _swapper,
-        address _receiptToken,
-        address _borrowToken,
-        address _aaveAddressProvider,
-        address _cellar,
-        string memory _name
+        address pool_,
+        address swapper_,
+        address receiptToken_,
+        address borrowToken_,
+        address poolAddressesProvider_,
+        address cellar_,
+        string memory name_
     ) public initializer {
-        __AaveV3Borrow_init(_pool, _swapper, _receiptToken, _borrowToken, _aaveAddressProvider, _name);
-        __Sommelier_init(_cellar);
-        if (ICellar(_cellar).asset() != borrowToken()) revert InvalidSommelierVault();
+        __AaveV3Borrow_init(pool_, swapper_, receiptToken_, borrowToken_, poolAddressesProvider_, name_);
+        __Sommelier_init(cellar_);
+        if (ICellar(cellar_).asset() != borrowToken_) revert InvalidSommelierVault();
     }
 
     /// @dev Deposit borrow tokens into the Sommelier vault
-    function _depositBorrowToken(uint256 _amount) internal override {
-        _depositInSommelier(_amount);
+    function _depositBorrowToken(uint256 amount_) internal override {
+        _depositInSommelier(amount_);
     }
 
     /// @notice Approve all required tokens
-    function _approveToken(uint256 _amount) internal virtual override {
-        super._approveToken(_amount);
-        IERC20(borrowToken()).forceApprove(address(cellar()), _amount);
+    function _approveToken(uint256 amount_) internal virtual override {
+        super._approveToken(amount_);
+        IERC20(borrowToken()).forceApprove(address(cellar()), amount_);
     }
 
     /// @dev Before repaying borrow tokens, withdraw from Sommelier vault
-    /// Withdraw _shares proportional to collateral _amount from vPool
-    function _withdrawBorrowToken(uint256 _amount) internal override {
-        _withdrawFromSommelier(_amount);
+    /// Withdraw _shares proportional to collateral amount_ from vPool
+    function _withdrawBorrowToken(uint256 amount_) internal override {
+        _withdrawFromSommelier(amount_);
     }
 
     /// @dev borrowToken balance here + borrowToken balance deposited in Sommelier vault

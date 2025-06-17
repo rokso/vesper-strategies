@@ -12,7 +12,6 @@ const func: DeployFunction = async function () {
     alias: strategyName,
     contract: AAVE_V3_SOMMELIER_BORROW_FOR_STETH,
     proxy: {
-      methodName: "AaveV3SommelierBorrowForStETH_initialize",
       initializeArgs: [
         Address.Vesper.vastETH,
         Address.swapper,

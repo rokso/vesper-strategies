@@ -33,10 +33,6 @@ abstract contract AaveV3VesperBorrow_Test is
         masterOracleMock.updatePrice(borrowToken, _borrowTokenPrice);
     }
 
-    function getCollateralToken() internal view virtual returns (address) {
-        return address(strategy.collateralToken());
-    }
-
     function _makeLoss(uint256 loss) internal override {
         _decreaseCollateralDeposit(loss);
     }
@@ -55,7 +51,7 @@ abstract contract AaveV3VesperBorrow_Test is
 
         vm.startPrank(address(strategy));
         _increaseCollateralBalance(amount);
-        _lendingPool.supply(getCollateralToken(), amount, address(strategy), 0);
+        _lendingPool.supply(address(strategy.collateralToken()), amount, address(strategy), 0);
         vm.stopPrank();
     }
 
@@ -67,7 +63,7 @@ abstract contract AaveV3VesperBorrow_Test is
             .getPool();
 
         vm.startPrank(address(strategy));
-        _lendingPool.withdraw(getCollateralToken(), amount, address(strategy));
+        _lendingPool.withdraw(address(strategy.collateralToken()), amount, address(strategy));
         _decreaseCollateralBalance(amount);
         vm.stopPrank();
     }
@@ -151,7 +147,7 @@ abstract contract AaveV3VesperBorrow_Test is
         (, uint256 _collateralFactor, , , , , , , , ) = _strategy
             .aavePoolAddressesProvider()
             .getPoolDataProvider()
-            .getReserveConfigurationData(getCollateralToken());
+            .getReserveConfigurationData(address(strategy.collateralToken()));
 
         return (_getCollateralDeposit() * _collateralFactor) / MAX_BPS;
     }

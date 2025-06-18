@@ -147,6 +147,12 @@ const A = {
     ExtraFinance: {
       LendingPool: "0xBB505c54D71E9e599cB8435b4F0cEEc05fC71cbD",
     },
+    Morpho: {
+      vault: {
+        Extrafi_XLend_WETH: "0x5A32099837D89E3a794a44fb131CBbAD41f87a8C",
+        Extrafi_XLend_USDC: "0x23479229e52Ab6aaD312D0B03DF9F33B46753B5e",
+      },
+    },
     Synth: {
       msUSD: "0xab5eB14c09D416F0aC63661E57EDB7AEcDb9BEfA",
       msETH: "0x526728DBc96689597F85ae4cd716d4f7fCcBAE9d",

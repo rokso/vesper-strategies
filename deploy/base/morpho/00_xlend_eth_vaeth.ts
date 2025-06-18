@@ -3,16 +3,16 @@ import { deployAndConfigureStrategy } from "../../../helpers/deploy-helpers";
 import { MORPHO_VAULT } from "../../../helpers/deploy-config";
 import Addresses from "../../../helpers/address";
 
-const strategyName = "Morpho_MetronomeMsUSD_msUSD";
+const strategyName = "Morpho_XLend_WETH";
 
 const func: DeployFunction = async function () {
-  const Address = Addresses.mainnet;
+  const Address = Addresses.base;
 
   await deployAndConfigureStrategy({
     alias: strategyName,
     contract: MORPHO_VAULT,
     proxy: {
-      initializeArgs: [Address.Vesper.vamsUSD, Address.swapper, Address.Morpho.vault.MetronomeMsUSD, strategyName],
+      initializeArgs: [Address.Vesper.vaETH, Address.swapper, Address.Morpho.vault.Extrafi_XLend_WETH, strategyName],
     },
   });
 };

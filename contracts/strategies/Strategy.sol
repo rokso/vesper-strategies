@@ -87,11 +87,11 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
     }
 
     modifier onlyPool() {
-        if (msg.sender != pool()) revert Unauthorized();
+        if (msg.sender != address(pool())) revert Unauthorized();
         _;
     }
 
-    function collateralToken() public view override returns (IERC20) {
+    function collateralToken() public view virtual override returns (IERC20) {
         return _getStrategyStorage()._collateralToken;
     }
 
@@ -100,11 +100,11 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
     }
 
     function governor() public view returns (address) {
-        return IVesperPool(pool()).governor();
+        return pool().governor();
     }
 
     function isActive() external view override returns (bool) {
-        (bool _isActive, , , , , , , , ) = IVesperPool(pool()).strategy(address(this));
+        (bool _isActive, , , , , , , , ) = pool().strategy(address(this));
         return _isActive;
     }
 
@@ -122,12 +122,12 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
         return _getStrategyStorage()._name;
     }
 
-    function pool() public view override returns (address) {
-        return _getStrategyStorage()._pool;
+    function pool() public view override returns (IVesperPool) {
+        return IVesperPool(_getStrategyStorage()._pool);
     }
 
     function poolAccountant() external view returns (address) {
-        return IVesperPool(pool()).poolAccountant();
+        return pool().poolAccountant();
     }
 
     function swapper() public view returns (ISwapper) {
@@ -142,7 +142,7 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
     function tvl() external view virtual returns (uint256);
 
     function VERSION() external pure virtual override returns (string memory) {
-        return "6.0.0";
+        return "6.0.1";
     }
 
     /**
@@ -259,17 +259,18 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
      * @param amount_ Amount of collateral token
      */
     function withdraw(uint256 amount_) external override onlyPool {
-        StrategyStorage storage $ = _getStrategyStorage();
-        IERC20 _collateralToken = $._collateralToken;
-        address _pool = $._pool;
-        uint256 _collateralHere = _collateralToken.balanceOf(address(this));
-        if (_collateralHere >= amount_) {
-            _collateralToken.safeTransfer(_pool, amount_);
+        IVesperPool _pool = pool();
+        // In most cases _token and $._collateralToken are same but in case of
+        // vastETH pool they can be different, stETH and wstETH respectively.
+        IERC20 _token = _pool.token();
+        uint256 _tokensHere = _token.balanceOf(address(this));
+        if (_tokensHere >= amount_) {
+            _token.safeTransfer(address(_pool), amount_);
         } else {
-            _withdrawHere(amount_ - _collateralHere);
+            _withdrawHere(amount_ - _tokensHere);
             // Do not assume _withdrawHere() will withdraw exact amount. Check balance again and transfer to pool
-            _collateralHere = _collateralToken.balanceOf(address(this));
-            _collateralToken.safeTransfer(_pool, Math.min(amount_, _collateralHere));
+            _tokensHere = _token.balanceOf(address(this));
+            _token.safeTransfer(address(_pool), Math.min(amount_, _tokensHere));
         }
     }
 
@@ -307,6 +308,5 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
         }
     }
 
-    // These methods must be implemented by the inheriting strategy
     function _withdrawHere(uint256 amount_) internal virtual;
 }

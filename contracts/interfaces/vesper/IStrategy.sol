@@ -3,6 +3,7 @@
 pragma solidity 0.8.25;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IVesperPool} from "./IVesperPool.sol";
 
 interface IStrategy {
     function rebalance(
@@ -26,7 +27,7 @@ interface IStrategy {
 
     function receiptToken() external view returns (address);
 
-    function pool() external view returns (address);
+    function pool() external view returns (IVesperPool);
 
     // solhint-disable-next-line func-name-mixedcase
     function VERSION() external view returns (string memory);

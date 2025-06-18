@@ -36,7 +36,7 @@ abstract contract Fraxlend is Strategy {
     /// @notice Approve all required tokens
     function _approveToken(uint256 amount_) internal override {
         IERC20 _collateralToken = collateralToken();
-        _collateralToken.forceApprove(pool(), amount_);
+        _collateralToken.forceApprove(address(pool()), amount_);
         _collateralToken.forceApprove(address(fraxlendPair()), amount_);
     }
 
@@ -55,7 +55,7 @@ abstract contract Fraxlend is Strategy {
      * @dev Generate report for pools accounting and also send profit and any payback to pool.
      */
     function _rebalance() internal override returns (uint256 _profit, uint256 _loss, uint256 _payback) {
-        IVesperPool _pool = IVesperPool(pool());
+        IVesperPool _pool = pool();
         uint256 _excessDebt = _pool.excessDebt(address(this));
         uint256 _totalDebt = _pool.totalDebtOf(address(this));
 

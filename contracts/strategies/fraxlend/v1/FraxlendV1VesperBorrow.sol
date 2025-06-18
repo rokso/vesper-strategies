@@ -40,7 +40,7 @@ contract FraxlendV1VesperBorrow is FraxlendV1Borrow {
         string memory name_
     ) external initializer {
         __FraxlendV1Borrow_init(pool_, swapper_, fraxlendPair_, borrowToken_, name_);
-        if (address(IVesperPool(vPool_).token()) != borrowToken()) revert InvalidGrowPool();
+        if (address(IVesperPool(vPool_).token()) != borrowToken_) revert InvalidGrowPool();
         _getFraxlendV1VesperBorrowStorage()._vPool = IVesperPool(vPool_);
     }
 

@@ -99,14 +99,22 @@ export const deployAndConfigureStrategy = async (deployParams: DeployParams, con
 
   // Add keeper
   const governor = await read(alias, "governor");
-  const keeper = configParams?.keeper || Address.Vesper.KEEPER;
+  const keeper = configParams?.keeper || Address.Vesper.keeper;
   const keepers = await read(alias, "keepers");
   if (!keepers.includes(hre.ethers.getAddress(keeper))) {
     const executeFunction = () => execute(alias, { from: governor, log: true }, "addKeeper", keeper);
     await executeOrStoreTxIfMultisig(hre, executeFunction);
   }
 
+  // update fee collector of strategy
+  const executeFunction = () =>
+    execute(alias, { from: governor, log: true }, "updateFeeCollector", Address.Vesper.feeCollector);
+  await executeOrStoreTxIfMultisig(hre, executeFunction);
+
+  // add strategy in poolAccountant
   await addStrategy(hre, alias, strategyAddress, configParams);
 
-  await hre.run("verify:verify", { address: strategyAddress });
+  if (!["hardhat", "localhost"].includes(hre.network.name)) {
+    await hre.run("verify:verify", { address: strategyAddress });
+  }
 };

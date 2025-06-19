@@ -130,12 +130,12 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
         return pool().poolAccountant();
     }
 
-    function swapper() public view returns (ISwapper) {
-        return _getStrategyStorage()._swapper;
-    }
-
     function receiptToken() public view virtual override returns (address) {
         return _getStrategyStorage()._receiptToken;
+    }
+
+    function swapper() public view returns (ISwapper) {
+        return _getStrategyStorage()._swapper;
     }
 
     /// @notice Returns total collateral locked in the strategy
@@ -195,7 +195,7 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
         _getStrategyStorage()._keepers.remove(keeperAddress_);
     }
 
-    /// @notice onlyKeeper:: Swap given token into collateral token.
+    /// @notice onlyKeeper: Swap given token into collateral token.
     function swapToCollateral(IERC20 tokenIn_, uint256 minAmountOut_) external onlyKeeper returns (uint256 _amountOut) {
         StrategyStorage storage $ = _getStrategyStorage();
         IERC20 _collateralToken = $._collateralToken;
@@ -260,7 +260,7 @@ abstract contract Strategy is Initializable, UUPSUpgradeable, IStrategy {
      */
     function withdraw(uint256 amount_) external override onlyPool {
         IVesperPool _pool = pool();
-        // In most cases _token and $._collateralToken are same but in case of
+        // In most cases _token and collateralToken() are same but in case of
         // vastETH pool they can be different, stETH and wstETH respectively.
         IERC20 _token = _pool.token();
         uint256 _tokensHere = _token.balanceOf(address(this));

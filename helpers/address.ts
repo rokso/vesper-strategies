@@ -77,7 +77,8 @@ const A = {
       },
     },
     Vesper: {
-      KEEPER: "0xf7364E230EA0e5CC41E6Cd4E2a30A26Ca1850b73", // Strategy keeper contract address
+      keeper: "0xf7364E230EA0e5CC41E6Cd4E2a30A26Ca1850b73", // Strategy keeper contract
+      feeCollector: "0x45ff0e3bD649A1d4B78982C8EEae0839AaA7F84F", // Revenue Splitter contract
       vaUSDC: "0xa8b607Aa09B6A2E306F93e74c282Fb13f6A80452",
       vUSDC: "0xc1eFBeE3a8daBD30D1d789138bc6Ea43A399C335",
       vaDAI: "0x0538C8bAc84E95A9dF8aC10Aad17DbE81b9E36ee",
@@ -117,7 +118,8 @@ const A = {
       V3: { rewards: "0x443EA0340cb75a160F31A440722dec7b5bc3C2E9" },
     },
     Vesper: {
-      KEEPER: "0xe1aA88d62d3A6b48f5d1D0C997D14C2323180f83", // Keeper contract
+      keeper: "0xe1aA88d62d3A6b48f5d1D0C997D14C2323180f83", // Strategy keeper contract
+      feeCollector: "0x32934AD7b1121DeFC631080b58599A0eaAB89878", // Vesper gnosis safe wallet
       vaUSDC: "0x539505Dde2B9771dEBE0898a84441c5E7fDF6BC0",
       vaETH: "0xCcF3d1AcF799bAe67F6e354d685295557cf64761",
       vaOP: "0x19382707d5a47E74f60053b652Ab34b6e30Febad",
@@ -150,7 +152,8 @@ const A = {
       msETH: "0x526728DBc96689597F85ae4cd716d4f7fCcBAE9d",
     },
     Vesper: {
-      KEEPER: "0x3ED788455Ec4CD272c578f7218bc5c5a8DB3B9B6", // Strategy keeper contract
+      keeper: "0x3ED788455Ec4CD272c578f7218bc5c5a8DB3B9B6", // Strategy keeper contract
+      feeCollector: "0x32934AD7b1121DeFC631080b58599A0eaAB89878", // Vesper gnosis safe wallet
       vamsETH: "0x913Ece180df83A2B81A4976F83cA88543a0C51b8",
       vaETH: "0x82562507429876486B60AF4F32390ef0947b3d13",
       vaUSDC: "0x1e41238aCd3A9fF90b0DCB9ea96Cf45F104e09Ef",

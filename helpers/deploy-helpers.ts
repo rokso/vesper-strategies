@@ -106,10 +106,13 @@ export const deployAndConfigureStrategy = async (deployParams: DeployParams, con
     await executeOrStoreTxIfMultisig(hre, executeFunction);
   }
 
-  // update fee collector of strategy
-  const executeFunction = () =>
-    execute(alias, { from: governor, log: true }, "updateFeeCollector", Address.Vesper.feeCollector);
-  await executeOrStoreTxIfMultisig(hre, executeFunction);
+  // Governor is added as feeCollector during initialization. Update fee collector of strategy if needed.
+  const feeCollector = await read(alias, "feeCollector");
+  if (feeCollector != Address.Vesper.feeCollector) {
+    const executeFunction = () =>
+      execute(alias, { from: governor, log: true }, "updateFeeCollector", Address.Vesper.feeCollector);
+    await executeOrStoreTxIfMultisig(hre, executeFunction);
+  }
 
   // add strategy in poolAccountant
   await addStrategy(hre, alias, strategyAddress, configParams);

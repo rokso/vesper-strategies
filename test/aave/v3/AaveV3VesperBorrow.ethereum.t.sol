@@ -6,7 +6,6 @@ import {Strategy} from "contracts/strategies/Strategy.sol";
 import {AaveV3VesperBorrow} from "contracts/strategies/aave/v3/AaveV3VesperBorrow.sol";
 import {AaveV3VesperBorrowForStETH} from "contracts/strategies/aave/v3/AaveV3VesperBorrowForStETH.sol";
 import {IWstETH} from "contracts/interfaces/lido/IWstETH.sol";
-import {IMasterOracle} from "contracts/interfaces/one-oracle/IMasterOracle.sol";
 import {AaveV3VesperBorrow_Test} from "test/aave/v3/AaveV3VesperBorrow.t.sol";
 import {vaETH, vaSTETH, vaUSDC, aEthWETH, aEthwstETH, USDC, WETH, wstETH, AAVE_V3_POOL_ADDRESSES_PROVIDER} from "test/helpers/Address.ethereum.sol";
 import {deinitialize} from "test/helpers/Functions.sol";
@@ -54,7 +53,7 @@ contract AaveV3VesperBorrow_stETH_WETH_Ethereum_Test is AaveV3VesperBorrow_Test 
     }
 
     function deal(address token, address to, uint256 amount) internal override {
-        IERC20 _stETH = strategy.collateralToken();
+        IERC20 _stETH = AaveV3VesperBorrowForStETH(address(strategy)).stETH();
         if (token != address(_stETH)) {
             return super.deal(token, to, amount);
         }
@@ -72,43 +71,7 @@ contract AaveV3VesperBorrow_stETH_WETH_Ethereum_Test is AaveV3VesperBorrow_Test 
         }
     }
 
-    function getCollateralToken() internal pure override returns (address) {
-        return wstETH;
-    }
-
-    function _decreaseCollateralBalance(uint256 amount) internal override {
-        require(amount > 0, "amount should be greater than 0");
-
-        IERC20 _collateralToken = IERC20(wstETH);
-        uint _balance = _collateralToken.balanceOf(address(strategy));
-        require(_balance >= amount, "no enough balance to decrease");
-
-        deal(address(_collateralToken), address(strategy), _balance - amount);
-    }
-
-    function _increaseCollateralBalance(uint256 amount) internal override {
-        require(amount > 0, "amount should be greater than 0");
-
-        IERC20 _collateralToken = IERC20(wstETH);
-
-        deal(address(_collateralToken), address(strategy), _collateralToken.balanceOf(address(strategy)) + amount);
-    }
-
     function _getWrappedAmount(uint256 unwrappedAmount) internal view override returns (uint256) {
         return IWstETH(wstETH).getWstETHByStETH(unwrappedAmount);
-    }
-
-    function _getCollateralBalance() internal view override returns (uint256) {
-        return IWstETH(wstETH).balanceOf(address(strategy));
-    }
-
-    function _getBorrowable() internal view override returns (uint256) {
-        IMasterOracle _oracle = strategy.swapper().masterOracle();
-        return
-            _oracle.quote(
-                wstETH,
-                AaveV3VesperBorrowForStETH(address(strategy)).borrowToken(),
-                _getMaxBorrowableInCollateral()
-            );
     }
 }

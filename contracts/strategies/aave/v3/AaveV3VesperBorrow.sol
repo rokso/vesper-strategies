@@ -13,7 +13,7 @@ import {AaveV3Borrow} from "./AaveV3Borrow.sol";
 contract AaveV3VesperBorrow is AaveV3Borrow {
     using SafeERC20 for IERC20;
 
-    error InvalidGrowPool();
+    error InvalidVesperPool();
 
     /// @custom:storage-location erc7201:vesper.storage.Strategy.AaveV3VesperBorrow
     struct AaveV3VesperBorrowStorage {
@@ -41,7 +41,7 @@ contract AaveV3VesperBorrow is AaveV3Borrow {
         string memory name_
     ) public initializer {
         __AaveV3Borrow_init(pool_, swapper_, receiptToken_, borrowToken_, poolAddressesProvider_, name_);
-        if (address(IVesperPool(vPool_).token()) != borrowToken()) revert InvalidGrowPool();
+        if (address(IVesperPool(vPool_).token()) != borrowToken_) revert InvalidVesperPool();
         _getAaveV3VesperBorrowStorage()._vPool = IVesperPool(vPool_);
     }
 
@@ -65,7 +65,7 @@ contract AaveV3VesperBorrow is AaveV3Borrow {
     function _claimAndSwapRewards() internal override {
         // Claim rewards from Aave
         AaveV3Borrow._claimAndSwapRewards();
-        VesperRewards._claimAndSwapRewards(vPool(), swapper(), address(wrappedCollateral()));
+        VesperRewards._claimAndSwapRewards(vPool(), swapper(), address(collateralToken()));
     }
 
     /// @dev Deposit borrow tokens into the Vesper Pool

@@ -6,6 +6,7 @@ on:
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/curve/*.sol"
       - "contracts/strategies/convex/*.sol"
+      - "test/Strategy*.sol"
       - "test/convex/*.sol"
 
 jobs:

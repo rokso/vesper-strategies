@@ -30,7 +30,7 @@ contract ExtraFinance_Ethereum_Test is Strategy_Withdraw_Test, Strategy_Rebalanc
         );
     }
 
-    function _makeLoss(uint256 loss) internal override {
+    function _decreaseCollateralDeposit(uint256 loss) internal override {
         ExtraFinance _strategy = ExtraFinance(payable(address(strategy)));
 
         uint256 _unstakeAmount = (loss * 1e18) / _strategy.lendingPool().exchangeRateOfReserve(_strategy.reserveId());
@@ -40,7 +40,7 @@ contract ExtraFinance_Ethereum_Test is Strategy_Withdraw_Test, Strategy_Rebalanc
         vm.stopPrank();
     }
 
-    function _makeProfit(uint256 profit) internal override {
+    function _increaseCollateralDeposit(uint256 profit) internal override {
         ExtraFinance _strategy = ExtraFinance(payable(address(strategy)));
 
         deal(address(token()), address(this), profit);

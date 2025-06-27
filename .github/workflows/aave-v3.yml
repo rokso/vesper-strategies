@@ -5,6 +5,7 @@ on:
       - ".github/workflows/aave-v3.yml"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/aave/v3/*.sol"
+      - "test/Strategy*.sol"
       - "test/aave/v3/*.sol"
 
 jobs:

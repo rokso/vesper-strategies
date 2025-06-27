@@ -6,6 +6,7 @@ on:
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/fraxlend/*.sol"
       - "contracts/strategies/fraxlend/v3/*.sol"
+      - "test/Strategy*.sol"
       - "test/fraxlend/v3/*.sol"
 
 jobs:

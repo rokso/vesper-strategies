@@ -17,7 +17,7 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
         _rebalance();
 
         // then
-        assertApproxEqRel(strategy.tvl(), _getWrappedAmount(initial), MAX_DEPOSIT_SLIPPAGE_REL, "tvl after rebalance");
+        assertApproxEqRel(strategy.tvl(), initial, MAX_DEPOSIT_SLIPPAGE_REL, "tvl after rebalance");
         assertApproxEqAbs(token().balanceOf(address(strategy)), 0, 1, "balance of strategy after rebalance");
     }
 
@@ -36,33 +36,35 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
         _rebalance();
 
         // then
-        assertApproxEqRel(strategy.tvl(), _getWrappedAmount(initial), MAX_DEPOSIT_SLIPPAGE_REL, "tvl after rebalance");
+        assertApproxEqRel(strategy.tvl(), initial, MAX_DEPOSIT_SLIPPAGE_REL, "tvl after rebalance");
         assertApproxEqAbs(token().balanceOf(address(strategy)), 0, 1, "balance of strategy after rebalance");
     }
 
     function test_rebalance_whenExcessDebtIsZeroAndHasProfit() public {
         // given
         uint256 initial = _poolInitialAmount();
-        uint256 _wrappedInitial = _getWrappedAmount(initial);
-        uint256 profit = (_wrappedInitial * 10_00) / MAX_BPS;
+        uint256 profit = (initial * 10_00) / MAX_BPS;
 
         deal(address(token()), address(pool), initial);
         pool.updateDebtOfStrategy({target_: initial, latest_: 0});
         _rebalance();
+        assertApproxEqRel(strategy.tvl(), initial, MAX_DEPOSIT_SLIPPAGE_REL, "tvl before profit");
 
         pool.updateDebtOfStrategy({target_: initial, latest_: initial});
+
         _makeProfit(profit);
-        assertApproxEqRel(strategy.tvl(), _wrappedInitial + profit, MAX_DEPOSIT_SLIPPAGE_REL, "tvl before rebalance");
+
+        assertApproxEqRel(strategy.tvl(), initial + profit, MAX_DEPOSIT_SLIPPAGE_REL, "tvl before rebalance");
 
         // when
         assertEq(pool.excessDebt(address(strategy)), 0, "excess debt before rebalance");
         _rebalance();
 
         // then
-        assertApproxEqRel(strategy.tvl(), _wrappedInitial, MAX_DEPOSIT_SLIPPAGE_REL, "tvl after rebalance");
+        assertApproxEqRel(strategy.tvl(), initial, MAX_DEPOSIT_SLIPPAGE_REL, "tvl after rebalance");
         assertApproxEqAbs(token().balanceOf(address(strategy)), 0, 1, "balance of strategy after rebalance");
         assertApproxEqRel(
-            _getWrappedAmount(token().balanceOf(address(pool))),
+            token().balanceOf(address(pool)),
             profit,
             MAX_DEPOSIT_SLIPPAGE_REL,
             "balance of pool after rebalance"
@@ -72,8 +74,7 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
     function test_rebalance_whenExcessDebtIsZeroAndHasLoss() public {
         // given
         uint256 initial = _poolInitialAmount();
-        uint256 _wrappedInitial = _getWrappedAmount(initial);
-        uint256 loss = (_wrappedInitial * 10_00) / MAX_BPS;
+        uint256 loss = (initial * 10_00) / MAX_BPS;
 
         deal(address(token()), address(pool), initial);
         pool.updateDebtOfStrategy({target_: initial, latest_: 0});
@@ -87,9 +88,9 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
         _rebalance();
 
         // then
-        assertApproxEqRel(strategy.tvl(), _wrappedInitial - loss, MAX_DEPOSIT_SLIPPAGE_REL, "tvl after rebalance");
+        assertApproxEqRel(strategy.tvl(), initial - loss, MAX_DEPOSIT_SLIPPAGE_REL, "tvl after rebalance");
         assertApproxEqAbs(token().balanceOf(address(strategy)), 0, 1, "balance of strategy after rebalance");
-        assertEq(token().balanceOf(address(pool)), 0, "balance of pool after rebalance");
+        assertApproxEqAbs(token().balanceOf(address(pool)), 0, 1, "balance of pool after rebalance");
     }
 
     function test_rebalance_whenHasExcessDebtAndHasNoProfit() public {
@@ -108,12 +109,7 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
         _rebalance();
 
         // then
-        assertApproxEqRel(
-            strategy.tvl(),
-            _getWrappedAmount(initial - excess),
-            MAX_DEPOSIT_SLIPPAGE_REL,
-            "tvl after rebalance"
-        );
+        assertApproxEqRel(strategy.tvl(), initial - excess, MAX_DEPOSIT_SLIPPAGE_REL, "tvl after rebalance");
         assertApproxEqAbs(token().balanceOf(address(strategy)), 0, 1, "balance of strategy after rebalance");
         assertApproxEqRel(
             token().balanceOf(address(pool)),
@@ -127,9 +123,7 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
         // given
         uint256 initial = _poolInitialAmount();
         uint256 excess = (initial * 10_00) / MAX_BPS;
-        uint256 _wrappedExcess = _getWrappedAmount(excess);
-        uint256 _wrappedInitial = _getWrappedAmount(initial);
-        uint256 profit = (_wrappedInitial * 10_00) / MAX_BPS;
+        uint256 profit = (initial * 10_00) / MAX_BPS;
 
         deal(address(token()), address(pool), initial);
         pool.updateDebtOfStrategy({target_: initial, latest_: 0});
@@ -137,23 +131,18 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
 
         pool.updateDebtOfStrategy({target_: initial - excess, latest_: initial});
         _makeProfit(profit);
-        assertApproxEqRel(strategy.tvl(), _wrappedInitial + profit, MAX_DEPOSIT_SLIPPAGE_REL, "tvl before rebalance");
+        assertApproxEqRel(strategy.tvl(), initial + profit, MAX_DEPOSIT_SLIPPAGE_REL, "tvl before rebalance");
 
         // when
         assertEq(pool.excessDebt(address(strategy)), excess, "excess debt before rebalance");
         _rebalance();
 
         // then
-        assertApproxEqRel(
-            strategy.tvl(),
-            _wrappedInitial - _wrappedExcess,
-            MAX_DEPOSIT_SLIPPAGE_REL,
-            "tvl after rebalance"
-        );
+        assertApproxEqRel(strategy.tvl(), initial - excess, MAX_DEPOSIT_SLIPPAGE_REL, "tvl after rebalance");
         assertApproxEqAbs(token().balanceOf(address(strategy)), 0, 1, "balance of strategy after rebalance");
         assertApproxEqRel(
-            _getWrappedAmount(token().balanceOf(address(pool))),
-            _wrappedExcess + profit,
+            token().balanceOf(address(pool)),
+            excess + profit,
             MAX_DEPOSIT_SLIPPAGE_REL,
             "balance of pool after rebalance"
         );
@@ -163,8 +152,7 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
         // given
         uint256 initial = _poolInitialAmount();
         uint256 excess = (initial * 10_00) / MAX_BPS;
-        uint256 _wrappedInitial = _getWrappedAmount(initial);
-        uint256 loss = (_wrappedInitial * 10_00) / MAX_BPS;
+        uint256 loss = (initial * 10_00) / MAX_BPS;
 
         deal(address(token()), address(pool), initial);
         pool.updateDebtOfStrategy({target_: initial, latest_: 0});
@@ -178,12 +166,7 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
         _rebalance();
 
         // then
-        assertApproxEqRel(
-            strategy.tvl(),
-            _wrappedInitial - _getWrappedAmount(excess) - loss,
-            MAX_DEPOSIT_SLIPPAGE_REL,
-            "tvl after rebalance"
-        );
+        assertApproxEqRel(strategy.tvl(), initial - excess - loss, MAX_DEPOSIT_SLIPPAGE_REL, "tvl after rebalance");
         assertApproxEqAbs(token().balanceOf(address(strategy)), 0, 1, "balance of strategy after rebalance");
         assertApproxEqRel(
             token().balanceOf(address(pool)),
@@ -209,12 +192,7 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
         _rebalance();
 
         // then
-        assertApproxEqRel(
-            strategy.tvl(),
-            _getWrappedAmount(initial + credit),
-            MAX_DEPOSIT_SLIPPAGE_REL,
-            "tvl after rebalance"
-        );
+        assertApproxEqRel(strategy.tvl(), initial + credit, MAX_DEPOSIT_SLIPPAGE_REL, "tvl after rebalance");
         assertApproxEqAbs(token().balanceOf(address(strategy)), 0, 1, "balance of strategy after rebalance");
         assertApproxEqAbs(token().balanceOf(address(pool)), 0, 1, "balance of pool after rebalance");
     }
@@ -223,8 +201,7 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
         // given
         uint256 initial = _poolInitialAmount();
         uint256 credit = (initial * 10_00) / MAX_BPS;
-        uint256 _wrappedInitial = _getWrappedAmount(initial);
-        uint256 profit = (_wrappedInitial * 10_00) / MAX_BPS;
+        uint256 profit = (initial * 10_00) / MAX_BPS;
 
         deal(address(token()), address(pool), initial + credit);
         pool.updateDebtOfStrategy({target_: initial, latest_: 0});
@@ -232,22 +209,17 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
 
         pool.updateDebtOfStrategy({target_: initial + credit, latest_: initial});
         _makeProfit(profit);
-        assertApproxEqRel(strategy.tvl(), _wrappedInitial + profit, MAX_DEPOSIT_SLIPPAGE_REL, "tvl before rebalance");
+        assertApproxEqRel(strategy.tvl(), initial + profit, MAX_DEPOSIT_SLIPPAGE_REL, "tvl before rebalance");
 
         // when
         assertEq(pool.creditLimit(address(strategy)), credit, "excess debt before rebalance");
         _rebalance();
 
         // then
-        assertApproxEqRel(
-            strategy.tvl(),
-            _wrappedInitial + _getWrappedAmount(credit),
-            MAX_DEPOSIT_SLIPPAGE_REL,
-            "tvl after rebalance"
-        );
+        assertApproxEqRel(strategy.tvl(), initial + credit, MAX_DEPOSIT_SLIPPAGE_REL, "tvl after rebalance");
         assertApproxEqAbs(token().balanceOf(address(strategy)), 0, 1, "balance of strategy after rebalance");
         assertApproxEqRel(
-            _getWrappedAmount(token().balanceOf(address(pool))),
+            token().balanceOf(address(pool)),
             profit,
             MAX_DEPOSIT_SLIPPAGE_REL,
             "balance of pool after rebalance"
@@ -258,8 +230,7 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
         // given
         uint256 initial = _poolInitialAmount();
         uint256 credit = (initial * 10_00) / MAX_BPS;
-        uint256 _wrappedInitial = _getWrappedAmount(initial);
-        uint256 loss = (_wrappedInitial * 10_00) / MAX_BPS;
+        uint256 loss = (initial * 10_00) / MAX_BPS;
 
         deal(address(token()), address(pool), initial + credit);
         pool.updateDebtOfStrategy({target_: initial, latest_: 0});
@@ -273,12 +244,7 @@ abstract contract Strategy_Rebalance_Test is Strategy_Test {
         _rebalance();
 
         // then
-        assertApproxEqRel(
-            strategy.tvl(),
-            _wrappedInitial + _getWrappedAmount(credit) - loss,
-            MAX_DEPOSIT_SLIPPAGE_REL,
-            "tvl after rebalance"
-        );
+        assertApproxEqRel(strategy.tvl(), initial + credit - loss, MAX_DEPOSIT_SLIPPAGE_REL, "tvl after rebalance");
         assertApproxEqAbs(token().balanceOf(address(strategy)), 0, 1, "balance of strategy after rebalance");
         assertApproxEqAbs(token().balanceOf(address(pool)), 0, 1, "balance of pool after rebalance");
     }

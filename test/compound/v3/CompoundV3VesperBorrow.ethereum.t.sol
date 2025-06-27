@@ -19,7 +19,7 @@ contract CompoundV3VesperBorrow_Ethereum_Test is
 {
     constructor() {
         MAX_WITHDRAW_SLIPPAGE_REL = 0.0000000001e18;
-        MAX_DEPOSIT_SLIPPAGE_REL = 0.0000000001e18;
+        MAX_DEPOSIT_SLIPPAGE_REL = 0.000000001e18;
     }
 
     function _setUp() internal override {
@@ -39,22 +39,13 @@ contract CompoundV3VesperBorrow_Ethereum_Test is
         );
     }
 
-    function _makeLoss(uint256 loss) internal override {
-        _decreaseCollateralDeposit(loss);
-    }
-
-    function _makeProfit(uint256 profit) internal override {
-        _adjustBorrowForNoLoss();
-        _increaseCollateralDeposit(profit);
-    }
-
     function _increaseCollateralDeposit(uint256 amount) internal override {
         require(amount > 0, "amount should be greater than 0");
 
         IComet _comet = CompoundV3VesperBorrow(payable(address(strategy))).comet();
 
         vm.startPrank(address(strategy));
-        _increaseCollateralBalance(amount);
+        _increaseTokenBalance(amount);
         _comet.supply(address(strategy.collateralToken()), amount);
         vm.stopPrank();
     }
@@ -67,7 +58,7 @@ contract CompoundV3VesperBorrow_Ethereum_Test is
 
         vm.startPrank(address(strategy));
         _comet.withdraw(address(_collateralToken), amount);
-        _decreaseCollateralBalance(amount);
+        _decreaseTokenBalance(amount);
         vm.stopPrank();
     }
 

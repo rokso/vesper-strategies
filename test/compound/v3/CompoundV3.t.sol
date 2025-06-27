@@ -14,7 +14,7 @@ abstract contract CompoundV3_Test is Strategy_Withdraw_Test, Strategy_Rebalance_
         MAX_WITHDRAW_SLIPPAGE_REL = 0.0000001e18;
     }
 
-    function _makeLoss(uint256 loss) internal override {
+    function _decreaseCollateralDeposit(uint256 loss) internal override {
         IComet _comet = CompoundV3(address(strategy)).comet();
 
         vm.startPrank(address(strategy));
@@ -22,7 +22,7 @@ abstract contract CompoundV3_Test is Strategy_Withdraw_Test, Strategy_Rebalance_
         vm.stopPrank();
     }
 
-    function _makeProfit(uint256 profit) internal override {
+    function _increaseCollateralDeposit(uint256 profit) internal override {
         IComet _comet = CompoundV3(address(strategy)).comet();
 
         deal(address(token()), address(this), profit);

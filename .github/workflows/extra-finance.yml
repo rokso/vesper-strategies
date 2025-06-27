@@ -5,6 +5,7 @@ on:
       - ".github/workflows/extra-finance.yml"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/extra-finance/*.sol"
+      - "test/Strategy*.sol"
       - "test/extra-finance/*.sol"
 
 jobs:

@@ -5,6 +5,7 @@ on:
       - ".github/workflows/euler-v2.yml"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/euler/*.sol"
+      - "test/Strategy*.sol"
       - "test/euler/*.sol"
 
 jobs:

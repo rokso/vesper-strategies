@@ -31,14 +31,14 @@ contract Sommelier_Ethereum_Test is Strategy_Withdraw_Test, Strategy_Rebalance_T
         }
     }
 
-    function _makeLoss(uint256 loss) internal override {
+    function _decreaseCollateralDeposit(uint256 loss) internal override {
         ICellar _cellar = Sommelier(address(strategy)).cellar();
         _waitForUnlockTime();
         vm.prank(address(strategy));
         _cellar.withdraw(loss, address(0xDead), address(strategy));
     }
 
-    function _makeProfit(uint256 profit) internal override {
+    function _increaseCollateralDeposit(uint256 profit) internal override {
         ICellar _cellar = Sommelier(address(strategy)).cellar();
         deal(address(token()), address(strategy), token().balanceOf(address(strategy)) + profit);
         vm.prank(address(strategy));

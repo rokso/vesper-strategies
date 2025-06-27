@@ -29,15 +29,6 @@ contract FraxlendV1VesperBorrow_Ethereum_Test is
         return 0.1e8;
     }
 
-    function _makeLoss(uint256 loss) internal override {
-        _decreaseCollateralDeposit(loss);
-    }
-
-    function _makeProfit(uint256 profit) internal override {
-        _adjustBorrowForNoLoss();
-        _increaseCollateralDeposit(profit);
-    }
-
     function _increaseCollateralDeposit(uint256 amount) internal override {
         require(amount > 0, "amount should be greater than 0");
 

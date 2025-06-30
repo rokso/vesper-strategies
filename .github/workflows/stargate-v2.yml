@@ -5,6 +5,7 @@ on:
       - ".github/workflows/stargate-v2.yml"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/stargate/v2/*.sol"
+      - "test/Strategy*.sol"
       - "test/stargate/v2/*.sol"
 
 jobs:

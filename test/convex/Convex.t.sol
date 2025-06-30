@@ -9,7 +9,7 @@ import {Strategy_Withdraw_Test} from "test/Strategy.withdraw.t.sol";
 import {Strategy_Rebalance_Test} from "test/Strategy.rebalance.t.sol";
 
 abstract contract Convex_Test is Strategy_Withdraw_Test, Strategy_Rebalance_Test {
-    function _makeLoss(uint256 loss) internal override {
+    function _decreaseCollateralDeposit(uint256 loss) internal override {
         Convex _strategy = Convex(payable(address(strategy)));
         IERC20 _lp = IERC20(_strategy.receiptToken());
         uint256 _lpAmount = (_strategy.lpBalanceStaked() * loss) / _strategy.tvl();
@@ -20,7 +20,14 @@ abstract contract Convex_Test is Strategy_Withdraw_Test, Strategy_Rebalance_Test
         vm.stopPrank();
     }
 
+    function _increaseCollateralDeposit(uint256 profit) internal override {}
+
     function _makeProfit(uint256 profit) internal override {
-        deal(address(token()), address(strategy), token().balanceOf(address(strategy)) + profit);
+        // Increasing `strategy.pool().token()` balance instead of depositing due to its complexity.
+        _increaseTokenBalance(profit);
+    }
+
+    function _makeLoss(uint256 loss) internal override {
+        _decreaseCollateralDeposit(loss);
     }
 }

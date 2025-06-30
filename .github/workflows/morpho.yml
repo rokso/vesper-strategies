@@ -5,6 +5,7 @@ on:
       - ".github/workflows/morpho.yml"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/morpho/*.sol"
+      - "test/Strategy*.sol"
       - "test/morpho/*.sol"
 
 jobs:

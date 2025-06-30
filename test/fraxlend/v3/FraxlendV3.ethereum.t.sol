@@ -18,7 +18,7 @@ contract FraxlendV3_Ethereum_Test is Strategy_Withdraw_Test, Strategy_Rebalance_
         FraxlendV3(address(strategy)).initialize(vaFRAX, SWAPPER, FRAXLEND_V3_sfrxETH_FRAX, "");
     }
 
-    function _makeLoss(uint256 loss) internal override {
+    function _decreaseCollateralDeposit(uint256 loss) internal override {
         IFraxlendPairV3 _pair = IFraxlendPairV3(address(FraxlendV3(address(strategy)).fraxlendPair()));
 
         vm.startPrank(address(strategy));
@@ -26,7 +26,7 @@ contract FraxlendV3_Ethereum_Test is Strategy_Withdraw_Test, Strategy_Rebalance_
         vm.stopPrank();
     }
 
-    function _makeProfit(uint256 profit) internal override {
+    function _increaseCollateralDeposit(uint256 profit) internal override {
         IFraxlendPairV3 _pair = IFraxlendPairV3(address(FraxlendV3(address(strategy)).fraxlendPair()));
         deal(address(token()), address(this), profit);
         token().approve(address(_pair), profit);

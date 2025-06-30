@@ -41,7 +41,16 @@ contract VPoolMock {
         uint256 _totalPayback = profit_ + _actualPayback;
 
         if (_totalPayback < _creditLine) {
-            token.transfer(_strategy, _creditLine - _totalPayback);
+            uint amount = _creditLine - _totalPayback;
+            uint balance = token.balanceOf(address(this));
+
+            if (amount > balance) {
+                // This covers transfers which have rounding issues (e.g. stETH)
+                require(amount - balance <= 2 wei, "VPoolMock: reportEarning, insufficient balance for transfer");
+                amount = balance;
+            }
+
+            token.transfer(_strategy, amount);
         } else if (_totalPayback > _creditLine) {
             token.transferFrom(_strategy, address(this), _totalPayback - _creditLine);
         }

@@ -5,6 +5,7 @@ on:
       - ".github/workflows/compound-v3.yml"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/compound/v3/*.sol"
+      - "test/Strategy*.sol"
       - "test/compound/v3/*.sol"
 
 jobs:

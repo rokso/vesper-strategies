@@ -23,14 +23,14 @@ contract EulerV2_Ethereum_Test is Strategy_Withdraw_Test, Strategy_Rebalance_Tes
         EulerV2(address(strategy)).initialize(vaUSDC, SWAPPER, EULER_V2_eUSDC2, "");
     }
 
-    function _makeLoss(uint256 loss) internal override {
+    function _decreaseCollateralDeposit(uint256 loss) internal override {
         IEulerV2 _eToken = EulerV2(address(strategy)).euler();
         vm.startPrank(address(strategy));
         _eToken.withdraw(loss, address(0xDead), address(strategy));
         vm.stopPrank();
     }
 
-    function _makeProfit(uint256 profit) internal override {
+    function _increaseCollateralDeposit(uint256 profit) internal override {
         IEulerV2 _eToken = EulerV2(address(strategy)).euler();
         deal(address(token()), address(this), profit);
         token().approve(address(_eToken), profit);

@@ -8,7 +8,7 @@ import {Strategy_Withdraw_Test} from "test/Strategy.withdraw.t.sol";
 import {Strategy_Rebalance_Test} from "test/Strategy.rebalance.t.sol";
 
 abstract contract MorphoVault_Test is Strategy_Withdraw_Test, Strategy_Rebalance_Test {
-    function _makeLoss(uint256 loss) internal override {
+    function _decreaseCollateralDeposit(uint256 loss) internal override {
         IMetaMorpho _morpho = MorphoVault(address(strategy)).metaMorpho();
 
         vm.startPrank(address(strategy));
@@ -16,7 +16,7 @@ abstract contract MorphoVault_Test is Strategy_Withdraw_Test, Strategy_Rebalance
         vm.stopPrank();
     }
 
-    function _makeProfit(uint256 profit) internal override {
+    function _increaseCollateralDeposit(uint256 profit) internal override {
         IMetaMorpho _morpho = MorphoVault(address(strategy)).metaMorpho();
 
         deal(address(token()), address(this), profit);

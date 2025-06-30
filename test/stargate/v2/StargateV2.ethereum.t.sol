@@ -25,7 +25,7 @@ contract StargateV2_Ethereum_Test is Strategy_Withdraw_Test, Strategy_Rebalance_
         );
     }
 
-    function _makeLoss(uint256 loss) internal override {
+    function _decreaseCollateralDeposit(uint256 loss) internal override {
         IStargatePool _pool = StargateV2(address(strategy)).stargatePool();
         IERC20 _stargateLp = StargateV2(address(strategy)).stargateLp();
 
@@ -35,7 +35,7 @@ contract StargateV2_Ethereum_Test is Strategy_Withdraw_Test, Strategy_Rebalance_
         vm.stopPrank();
     }
 
-    function _makeProfit(uint256 profit) internal override {
+    function _increaseCollateralDeposit(uint256 profit) internal override {
         IStargatePool _pool = StargateV2(address(strategy)).stargatePool();
 
         deal(address(token()), address(this), profit);

@@ -54,6 +54,10 @@ contract AaveV3SommelierBorrowForStETH is AaveV3Borrow, SommelierBase {
         if (ICellar(cellar_).asset() != borrowToken_) revert InvalidSommelierVault();
     }
 
+    function stETH() public view returns (IERC20) {
+        return pool().token();
+    }
+
     function collateralToken() public view override returns (IERC20) {
         return IERC20(address(_wstETH()));
     }
@@ -62,17 +66,14 @@ contract AaveV3SommelierBorrowForStETH is AaveV3Borrow, SommelierBase {
         return super.isReservedToken(token_) || token_ == address(cellar());
     }
 
-    function stETH() public view returns (IERC20) {
-        return pool().token();
-    }
-
     /// @notice Returns total collateral locked in the strategy
     function tvl() external view override returns (uint256) {
         // receiptToken is aToken. aToken is 1:1 of wstETH
         return
-            _calculateWrapped(stETH().balanceOf(address(this))) +
-            collateralToken().balanceOf(address(this)) +
-            IERC20(receiptToken()).balanceOf(address(this));
+            stETH().balanceOf(address(this)) +
+            convertToStETH(
+                collateralToken().balanceOf(address(this)) + IERC20(receiptToken()).balanceOf(address(this))
+            );
     }
 
     function _approveToken(uint256 amount_) internal override {
@@ -106,7 +107,7 @@ contract AaveV3SommelierBorrowForStETH is AaveV3Borrow, SommelierBase {
 
         IERC20 _stETH = stETH();
         uint256 _stEthHere = _stETH.balanceOf(address(this));
-        uint256 _totalSteth = _stEthHere + _calculateUnwrapped(_getSupplied());
+        uint256 _totalSteth = _stEthHere + convertToStETH(_getSupplied());
 
         //
         // 3. Rebalance collateral tokens and report earning to the Vesper pool
@@ -138,7 +139,7 @@ contract AaveV3SommelierBorrowForStETH is AaveV3Borrow, SommelierBase {
         // 1. calculate wrapped of amount_ to call parent _withdrawHere().
         // 2. Call parents withdrawHere
         //
-        super._withdrawHere(_calculateWrapped(amount_));
+        super._withdrawHere(convertToWstETH(amount_));
 
         //
         // 3. unwrap withdrawn wstETH.
@@ -153,12 +154,12 @@ contract AaveV3SommelierBorrowForStETH is AaveV3Borrow, SommelierBase {
         return _getAaveV3SommelierBorrowForStETHStorage()._wstETH;
     }
 
-    function _calculateUnwrapped(uint256 wrappedAmount_) internal view returns (uint256) {
-        return _wstETH().getStETHByWstETH(wrappedAmount_);
+    function convertToWstETH(uint256 stETHAmount_) public view returns (uint256 _wstETHAmount) {
+        return _wstETH().getWstETHByStETH(stETHAmount_);
     }
 
-    function _calculateWrapped(uint256 unwrappedAmount_) internal view returns (uint256) {
-        return _wstETH().getWstETHByStETH(unwrappedAmount_);
+    function convertToStETH(uint256 wstETHAmount_) public view returns (uint256 _stETHAmount) {
+        return _wstETH().getStETHByWstETH(wstETHAmount_);
     }
 
     function _unwrap(uint256 wrappedAmount_) internal returns (uint256 _unwrappedAmount) {

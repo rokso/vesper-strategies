@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "forge-std/Test.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Strategy} from "contracts/strategies/Strategy.sol";
 import {AaveV3VesperBorrow, IVesperPool} from "contracts/strategies/aave/v3/AaveV3VesperBorrow.sol";
 import {ILendingPool} from "contracts/interfaces/aave/ILendingPool.sol";
 import {IAToken} from "contracts/interfaces/aave/IAToken.sol";
-import {IAaveOracle} from "contracts/interfaces/aave/IAaveOracle.sol";
 import {StrategyBorrow_Rebalance_Test} from "test/StrategyBorrow.rebalance.t.sol";
 import {Strategy_Withdraw_Test} from "test/Strategy.withdraw.t.sol";
 import {Strategy_Rebalance_Test} from "test/Strategy.rebalance.t.sol";
@@ -21,41 +21,23 @@ abstract contract AaveV3VesperBorrow_Test is
         MAX_DEPOSIT_SLIPPAGE_REL = 0.0000000001e18;
     }
 
-    function _oracleSetup(address collateralToken, address borrowToken) internal {
-        IAaveOracle _oracle = AaveV3VesperBorrow((address(strategy))).aavePoolAddressesProvider().getPriceOracle();
-
-        uint256 _collateralTokenPrice = _oracle.getAssetPrice(collateralToken);
-        // Set collateral token price 8 decimals
-        masterOracleMock.updatePrice(collateralToken, _collateralTokenPrice);
-
-        uint256 _borrowTokenPrice = _oracle.getAssetPrice(borrowToken);
-        // Set borrow token price 8 decimals
-        masterOracleMock.updatePrice(borrowToken, _borrowTokenPrice);
-    }
-
-    function _makeLoss(uint256 loss) internal override {
-        _decreaseCollateralDeposit(loss);
-    }
-
-    function _makeProfit(uint256 profit) internal override {
-        _adjustBorrowForNoLoss();
-        _increaseCollateralDeposit(profit);
-    }
-
-    function _increaseCollateralDeposit(uint256 amount) internal override {
+    function _increaseCollateralDeposit(uint256 amount) internal virtual override {
         require(amount > 0, "amount should be greater than 0");
 
         ILendingPool _lendingPool = AaveV3VesperBorrow(payable(address(strategy)))
             .aavePoolAddressesProvider()
             .getPool();
 
+        _increaseTokenBalance(amount);
+
         vm.startPrank(address(strategy));
-        _increaseCollateralBalance(amount);
+
         _lendingPool.supply(address(strategy.collateralToken()), amount, address(strategy), 0);
+
         vm.stopPrank();
     }
 
-    function _decreaseCollateralDeposit(uint256 amount) internal override {
+    function _decreaseCollateralDeposit(uint256 amount) internal virtual override {
         require(amount > 0, "amount should be greater than 0");
 
         ILendingPool _lendingPool = AaveV3VesperBorrow(payable(address(strategy)))
@@ -64,7 +46,7 @@ abstract contract AaveV3VesperBorrow_Test is
 
         vm.startPrank(address(strategy));
         _lendingPool.withdraw(address(strategy.collateralToken()), amount, address(strategy));
-        _decreaseCollateralBalance(amount);
+        _decreaseTokenBalance(amount);
         vm.stopPrank();
     }
 
@@ -140,7 +122,7 @@ abstract contract AaveV3VesperBorrow_Test is
         return (_vPool.balanceOf(address(strategy)) * _vPool.pricePerShare()) / 1e18;
     }
 
-    function _getMaxBorrowableInCollateral() internal view override returns (uint256) {
+    function _getMaxBorrowableInCollateral() internal view virtual override returns (uint256) {
         AaveV3VesperBorrow _strategy = AaveV3VesperBorrow(payable(address(strategy)));
 
         // _collateralFactor in 4 decimal. 10_000 = 100%

@@ -69,10 +69,6 @@ abstract contract Strategy_Test is Test {
         return amount * 10 ** IERC20Metadata(address(token())).decimals();
     }
 
-    function _getWrappedAmount(uint256 amount) internal view virtual returns (uint256) {
-        return amount;
-    }
-
     function _waitForUnlockTime() internal virtual {}
 
     function _rebalance() internal virtual {
@@ -80,11 +76,43 @@ abstract contract Strategy_Test is Test {
         strategy.rebalance(0, type(uint256).max);
     }
 
-    function _makeProfit(uint256 profit) internal virtual;
+    function _makeProfit(uint256 profit) internal virtual {
+        _increaseCollateralDeposit(profit);
+    }
 
-    function _makeLoss(uint256 loss) internal virtual;
+    function _makeLoss(uint256 loss) internal virtual {
+        _decreaseCollateralDeposit(loss);
+    }
 
     function _poolInitialAmount() internal view virtual returns (uint256) {
         return parseAmount(1_000);
     }
+
+    /// @dev Increase `strategy.pool().token()` balance
+    function _increaseTokenBalance(uint256 amount) internal virtual {
+        require(amount > 0, "amount should be greater than 0");
+
+        IERC20 _collateralToken = token();
+
+        deal(address(_collateralToken), address(strategy), _collateralToken.balanceOf(address(strategy)) + amount);
+    }
+
+    /// @dev Decrease `strategy.pool().token()` balance
+    function _decreaseTokenBalance(uint256 amount) internal virtual {
+        require(amount > 0, "amount should be greater than 0");
+
+        IERC20 _collateralToken = token();
+        uint _balance = _collateralToken.balanceOf(address(strategy));
+        require(_balance >= amount, "not enough collateral balance to decrease");
+
+        deal(address(_collateralToken), address(strategy), _balance - amount);
+    }
+
+    /// @dev Increase `strategy.collateral()` deposit
+    /// If `strategy.pool().token()` != `strategy.collateral()` (e.g. `stETH`) this function must handle swap/wrap
+    function _increaseCollateralDeposit(uint256 tokenAmount) internal virtual;
+
+    /// @dev Decrease `strategy.collateral()` deposit
+    /// If `strategy.pool().token()` != `strategy.collateral()` (e.g. `stETH`) this function must handle swap/wrap
+    function _decreaseCollateralDeposit(uint256 tokenAmount) internal virtual;
 }

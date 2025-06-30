@@ -5,6 +5,7 @@ on:
       - ".github/workflows/yearn.yml"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/yearn/*.sol"
+      - "test/Strategy*.sol"
       - "test/yearn/*.sol"
 
 jobs:

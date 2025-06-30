@@ -5,6 +5,7 @@ on:
       - ".github/workflows/sommelier.yml"
       - "contracts/strategies/Strategy.sol"
       - "contracts/strategies/sommelier/*.sol"
+      - "test/Strategy*.sol"
       - "test/sommelier/*.sol"
 
 jobs:

@@ -24,7 +24,7 @@ contract AaveV3_Ethereum_Test is Strategy_Withdraw_Test, Strategy_Rebalance_Test
         AaveV3(address(strategy)).initialize(vaUSDC, SWAPPER, AAVE_V3_aUSDC, AAVE_V3_POOL_ADDRESSES_PROVIDER, "");
     }
 
-    function _makeLoss(uint256 loss) internal override {
+    function _decreaseCollateralDeposit(uint256 loss) internal override {
         ILendingPool _pool = AaveV3(address(strategy)).aavePoolAddressesProvider().getPool();
 
         vm.startPrank(address(strategy));
@@ -32,7 +32,7 @@ contract AaveV3_Ethereum_Test is Strategy_Withdraw_Test, Strategy_Rebalance_Test
         vm.stopPrank();
     }
 
-    function _makeProfit(uint256 profit) internal override {
+    function _increaseCollateralDeposit(uint256 profit) internal override {
         ILendingPool _pool = AaveV3(address(strategy)).aavePoolAddressesProvider().getPool();
 
         deal(address(token()), address(this), profit);

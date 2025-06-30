@@ -23,7 +23,7 @@ contract Yearn_Ethereum_Test is Strategy_Withdraw_Test, Strategy_Rebalance_Test 
         Yearn(address(strategy)).initialize(vaETH, SWAPPER, YEARN_yvWETH, "");
     }
 
-    function _makeLoss(uint256 loss) internal override {
+    function _decreaseCollateralDeposit(uint256 loss) internal override {
         IYToken _yToken = Yearn(address(strategy)).yToken();
         uint256 _yTokenDecimals = 10 ** _yToken.decimals();
         uint256 _shares = (loss * _yTokenDecimals) / _yToken.pricePerShare();
@@ -36,7 +36,7 @@ contract Yearn_Ethereum_Test is Strategy_Withdraw_Test, Strategy_Rebalance_Test 
         vm.stopPrank();
     }
 
-    function _makeProfit(uint256 profit) internal override {
+    function _increaseCollateralDeposit(uint256 profit) internal override {
         IYToken _yToken = Yearn(address(strategy)).yToken();
 
         vm.startPrank(address(strategy));

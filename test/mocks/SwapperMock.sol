@@ -14,6 +14,10 @@ contract SwapperMock is ISwapper, Test {
         slippage = slippage_;
     }
 
+    function updateMasterOracle(address masterOracle_) external {
+        masterOracle = IMasterOracle(masterOracle_);
+    }
+
     constructor(IMasterOracle masterOracle_) {
         masterOracle = masterOracle_;
     }

@@ -73,6 +73,9 @@ abstract contract Strategy_Withdraw_Test is Strategy_Test {
         assertApproxEqAbs(token().balanceOf(address(strategy)), 0, 1, "balance of strategy after rebalance");
 
         _waitForUnlockTime();
+        // There are scenarios when strategy yield profit due to `_waitForUnlockTime`
+        tvl = strategy.tvl();
+        uint256 _profit = tvl > amount ? tvl - amount : 0;
 
         // Allow to adjust borrow position before withdrawal of whole TVL (i.e. ensure balance is enough to repay all debt).
         _rebalanceBorrow();
@@ -85,6 +88,12 @@ abstract contract Strategy_Withdraw_Test is Strategy_Test {
             MAX_WITHDRAW_SLIPPAGE_REL,
             "balance of pool after withdraw"
         );
-        assertApproxEqAbs(strategy.tvl(), 0, MAX_DUST_LEFT_IN_PROTOCOL_AFTER_WITHDRAW_ABS, "tvl after withdraw");
+
+        assertApproxEqAbs(
+            strategy.tvl() - _profit,
+            0,
+            MAX_DUST_LEFT_IN_PROTOCOL_AFTER_WITHDRAW_ABS,
+            "tvl after withdraw"
+        );
     }
 }

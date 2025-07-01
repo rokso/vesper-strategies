@@ -151,6 +151,7 @@ const A = {
       vault: {
         Extrafi_XLend_WETH: "0x5A32099837D89E3a794a44fb131CBbAD41f87a8C",
         Extrafi_XLend_USDC: "0x23479229e52Ab6aaD312D0B03DF9F33B46753B5e",
+        Moonwell_Flagship_ETH: "0xa0E430870c4604CcfC7B38Ca7845B1FF653D0ff1",
       },
     },
     Synth: {

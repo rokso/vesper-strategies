@@ -7,8 +7,8 @@ import {IVesperPool} from "./IVesperPool.sol";
 
 interface IStrategy {
     function rebalance(
-        uint256 _minProfit,
-        uint256 _maxLoss
+        uint256 minProfit_,
+        uint256 maxLoss_
     ) external returns (uint256 _profit, uint256 _loss, uint256 _payback);
 
     function sweep(address _fromToken) external;

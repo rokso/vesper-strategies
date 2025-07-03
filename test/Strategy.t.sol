@@ -38,6 +38,13 @@ abstract contract Strategy_Test is Test {
         console.log("running fork from block", block.number);
     }
 
+    function _getForkBlockNumberEnvVar(string memory urlOrAlias) internal pure returns (string memory) {
+        if (keccak256(abi.encodePacked(urlOrAlias)) == keccak256("base")) return "BASE_FORK_BLOCK_NUMBER";
+        if (keccak256(abi.encodePacked(urlOrAlias)) == keccak256("ethereum")) return "ETHEREUM_FORK_BLOCK_NUMBER";
+        if (keccak256(abi.encodePacked(urlOrAlias)) == keccak256("optimism")) return "OPTIMISM_FORK_BLOCK_NUMBER";
+        return "";
+    }
+
     /// @dev If fork is not active then create and select fork.
     /// If tests are invoked as "forge test --fork-url node_url" then there is
     /// an active fork already and we want to respect that.
@@ -45,6 +52,10 @@ abstract contract Strategy_Test is Test {
         try vm.activeFork() returns (uint256 _forkId) {
             return _forkId;
         } catch {
+            string memory envVar = _getForkBlockNumberEnvVar(urlOrAlias);
+            if (bytes(envVar).length != 0 && vm.envExists(envVar)) {
+                return vm.createSelectFork(urlOrAlias, vm.envUint(envVar));
+            }
             return vm.createSelectFork(urlOrAlias);
         }
     }

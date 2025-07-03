@@ -14,6 +14,13 @@ interface ICellar is IERC20 {
      */
     function convertToAssets(uint256 shares) external view returns (uint256);
 
+    function owner() external returns (address);
+
+    /**
+     * @notice Allows share lock period to be updated.
+     */
+    function setShareLockPeriod(uint256) external;
+
     /**
      * @notice After deposits users must wait `shareLockPeriod` time before being able to transfer or withdraw their shares.
      */

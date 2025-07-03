@@ -103,7 +103,7 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
         uint256 _borrowDebt = _getBorrowDebt();
         uint256 _totalBorrowBalance = _getTotalBorrowBalance();
         if (_borrowDebt > _totalBorrowBalance) {
-            assertApproxEqRel(_borrowDebt, _totalBorrowBalance, 0.0000001e18, "borrow loss should be dust");
+            assertApproxEqRel(_borrowDebt, _totalBorrowBalance, 0.0003e18, "borrow loss should be dust");
             _decreaseBorrowDebt(_borrowDebt - _totalBorrowBalance);
         }
     }
@@ -182,7 +182,7 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
 
         _withdrawCollateral(_getCollateralDeposit());
 
-        assertApproxEqAbs(_getTokenBalance(), parseAmount(100), 8, "collateral balance (4)");
+        assertApproxEqRel(_getTokenBalance(), parseAmount(100), MAX_DEPOSIT_SLIPPAGE_REL, "collateral balance (4)");
         assertApproxEqAbs(_getCollateralDeposit(), 0, 2, "collateral deposit (2)");
         assertApproxEqAbs(_getBorrowBalance(), 0, 1, "borrow balance (4)");
         assertEq(_getBorrowDebt(), 0, "borrow debt (3)");

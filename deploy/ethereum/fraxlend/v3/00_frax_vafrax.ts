@@ -1,0 +1,21 @@
+import { DeployFunction } from "hardhat-deploy/types";
+import { deployAndConfigureStrategy } from "../../../../helpers/deploy-helpers";
+import { FRAXLEND_V3 } from "../../../../helpers/deploy-config";
+import Addresses from "../../../../helpers/address";
+
+const strategyName = "Fraxlend_sfrxETH_FRAX";
+
+const func: DeployFunction = async function () {
+  const Address = Addresses.ethereum;
+
+  await deployAndConfigureStrategy({
+    alias: strategyName,
+    contract: FRAXLEND_V3,
+    proxy: {
+      initializeArgs: [Address.Vesper.vaFRAX, Address.swapper, Address.Fraxlend.V3.sfrxETH_FRAX, strategyName],
+    },
+  });
+};
+
+func.tags = [strategyName];
+export default func;

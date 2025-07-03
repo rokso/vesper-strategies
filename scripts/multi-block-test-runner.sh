@@ -68,7 +68,7 @@ run_network_tests() {
 
 # Check and run tests for each network
 networks=("ethereum" "base" "optimism")
-node_urls=("$MAINNET_FORK_NODE_URL" "$BASE_FORK_NODE_URL" "$OPTIMISM_FORK_NODE_URL")
+node_urls=("$ETHEREUM_FORK_NODE_URL" "$BASE_FORK_NODE_URL" "$OPTIMISM_FORK_NODE_URL")
 
 # Run tests for each available network
 for i in "${!networks[@]}"; do

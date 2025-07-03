@@ -10,13 +10,13 @@ import "./tasks/impersonate";
 import "@nomicfoundation/hardhat-foundry";
 
 const localhost = process.env.FORK_NODE_URL || "http://localhost:8545";
-const mainnetNodeUrl = process.env.MAINNET_NODE_URL || "";
+const ethereumNodeUrl = process.env.ETHEREUM_NODE_URL || "";
 const optimismNodeUrl = process.env.OPTIMISM_NODE_URL || "";
 const baseNodeUrl = process.env.BASE_NODE_URL || "";
 
 function getChainConfig(nodeUrl: string) {
   if (["eth.connect", "eth-mainnet", "mainnet.infura"].some((v) => nodeUrl.includes(v))) {
-    return { chainId: 1, deploy: ["deploy/mainnet"] };
+    return { chainId: 1, deploy: ["deploy/ethereum"] };
   }
 
   if (["optimism", "opt-mainnet"].some((v) => nodeUrl.includes(v))) {
@@ -27,7 +27,7 @@ function getChainConfig(nodeUrl: string) {
     return { chainId: 8453, deploy: ["deploy/base"] };
   }
 
-  return { chainId: 31337, deploy: ["deploy/mainnet"] };
+  return { chainId: 31337, deploy: ["deploy/ethereum"] };
 }
 
 function getFork() {
@@ -67,10 +67,10 @@ const config: HardhatUserConfig = {
       ...getChainConfig(localhost),
       autoImpersonate: true,
     },
-    mainnet: {
-      url: mainnetNodeUrl,
+    ethereum: {
+      url: ethereumNodeUrl,
       accounts,
-      ...getChainConfig(mainnetNodeUrl),
+      ...getChainConfig(ethereumNodeUrl),
     },
     optimism: {
       url: optimismNodeUrl,

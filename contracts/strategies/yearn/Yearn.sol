@@ -93,7 +93,7 @@ contract Yearn is Strategy {
 
         // strategy may get new fund. deposit to generate yield
         _collateralHere = _collateralToken.balanceOf(address(this));
-        if (_collateralHere > 0) {
+        if (_collateralHere > 0 && _convertToShares(_collateralHere) > 0) {
             yToken().deposit(_collateralHere);
         }
     }

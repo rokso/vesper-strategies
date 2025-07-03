@@ -89,11 +89,6 @@ abstract contract Strategy_Withdraw_Test is Strategy_Test {
             "balance of pool after withdraw"
         );
 
-        assertApproxEqAbs(
-            strategy.tvl() - _profit,
-            0,
-            MAX_DUST_LEFT_IN_PROTOCOL_AFTER_WITHDRAW_ABS,
-            "tvl after withdraw"
-        );
+        assertApproxEqAbs(strategy.tvl(), _profit, MAX_DUST_LEFT_IN_PROTOCOL_AFTER_WITHDRAW_ABS, "tvl after withdraw");
     }
 }

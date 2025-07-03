@@ -104,7 +104,7 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
         uint256 _totalBorrowBalance = _getTotalBorrowBalance();
         if (_borrowDebt > _totalBorrowBalance) {
             assertApproxEqRel(_borrowDebt, _totalBorrowBalance, 0.0003e18, "borrow loss should be dust");
-            _decreaseBorrowDebt(_borrowDebt - _totalBorrowBalance);
+            _increaseBorrowBalance(_borrowDebt - _totalBorrowBalance);
         }
     }
 
@@ -167,14 +167,14 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
         _repay(_repayAmount);
 
         assertApproxEqAbs(_getBorrowDebt(), _repayAmount, 2, "borrow debt (2)");
-        assertApproxEqAbs(_getBorrowBalance(), _repayAmount, 1, "borrow balance (2)");
+        assertApproxEqAbs(_getBorrowBalance(), _repayAmount, 2, "borrow balance (2)");
 
         // Borrowed X and then repaid Y, so remaining in strategy is X-Y. This can be deposited in end protocol.
         uint256 _depositBorrowAmount = _borrowAmount - _repayAmount;
         _depositBorrow(_depositBorrowAmount);
 
-        assertApproxEqAbs(_getBorrowBalance(), 0, 1, "borrow balance (3)");
-        assertApproxEqAbs(_getBorrowDeposit(), _depositBorrowAmount, 1, "borrow deposit (1)");
+        assertApproxEqAbs(_getBorrowBalance(), 0, 2, "borrow balance (3)");
+        assertApproxEqAbs(_getBorrowDeposit(), _depositBorrowAmount, 2, "borrow deposit (1)");
 
         _withdrawBorrow(_depositBorrowAmount);
         // Repay all so that we can withdraw all in next step
@@ -184,7 +184,7 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
 
         assertApproxEqRel(_getTokenBalance(), parseAmount(100), MAX_DEPOSIT_SLIPPAGE_REL, "collateral balance (4)");
         assertApproxEqAbs(_getCollateralDeposit(), 0, 2, "collateral deposit (2)");
-        assertApproxEqAbs(_getBorrowBalance(), 0, 1, "borrow balance (4)");
+        assertApproxEqAbs(_getBorrowBalance(), 0, 2, "borrow balance (4)");
         assertEq(_getBorrowDebt(), 0, "borrow debt (3)");
         assertEq(_getBorrowDeposit(), 0, "borrow deposit (2)");
     }

@@ -45,7 +45,7 @@ contract AaveV3VesperBorrow_stETH_WETH_Ethereum_Test is AaveV3VesperBorrow_Test 
         deinitialize(address(strategy));
         AaveV3VesperBorrowForStETH(address(strategy)).initialize(
             vaSTETH,
-            SWAPPER,
+            address(swapperMock),
             aEthwstETH,
             WETH,
             AAVE_V3_POOL_ADDRESSES_PROVIDER,
@@ -53,6 +53,8 @@ contract AaveV3VesperBorrow_stETH_WETH_Ethereum_Test is AaveV3VesperBorrow_Test 
             wstETH,
             ""
         );
+        // Both Aave and Master Oracle get prices from Chainlink
+        swapperMock.updateMasterOracle(MASTER_ORACLE);
     }
 
     function deal(address token, address to, uint256 amount) internal override {

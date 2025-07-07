@@ -80,17 +80,18 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
     /// @dev Use collateral factor to get maximum borrowable amount in `strategy.collateral()`
     function _getMaxBorrowableInCollateral() internal view virtual returns (uint256);
 
-    /// @dev Get max amount borrowable in `strategy.borrowToken()`
+    /// @dev Get actual amount borrowable in `strategy.borrowToken()`
     function _getBorrowable() internal view virtual returns (uint256) {
         IMasterOracle _oracle = strategy.swapper().masterOracle();
+        IBorrowStrategy _borrowStrategy = IBorrowStrategy(address(strategy));
         // In case of high value collateralToken and low value borrowToken
         // _borrowable can be huge, so cap it to max 100.
-        uint256 _borrowable = _oracle.quote(
+        uint256 _maxBorrowable = _oracle.quote(
             address(token()),
-            IBorrowStrategy(address(strategy)).borrowToken(),
+            _borrowStrategy.borrowToken(),
             _getMaxBorrowableInCollateral()
         );
-
+        uint256 _borrowable = (_maxBorrowable * _borrowStrategy.minBorrowLimit()) / MAX_BPS;
         return Math.min(_borrowable, parseBorrowAmount(100));
     }
 

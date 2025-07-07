@@ -33,7 +33,7 @@ abstract contract CurveBase is Strategy {
     event SlippageUpdated(uint256 oldSlippage, uint256 newSlippage);
     event MasterOracleUpdated(IMasterOracle oldMasterOracle, IMasterOracle newMasterOracle);
 
-    ITokenMinter public constant CRV_MINTER = ITokenMinter(0xd061D61a4d941c39E5453435B6345Dc261C2fcE0); // This contract only exists on mainnet
+    ITokenMinter internal constant CRV_MINTER = ITokenMinter(0xd061D61a4d941c39E5453435B6345Dc261C2fcE0); // This contract only exists on ethereum
     ILiquidityGaugeFactory public constant GAUGE_FACTORY =
         ILiquidityGaugeFactory(0xabC000d88f23Bb45525E447528DBF656A9D55bf5); // Act as CRV_MINTER on side chains
     IAddressProvider public constant ADDRESS_PROVIDER = IAddressProvider(0x5ffe7FB82894076ECB99A30D6A32e969e6e35E98); // Same address to all chains

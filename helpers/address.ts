@@ -1,7 +1,7 @@
 import hre from "hardhat";
 
 const A = {
-  mainnet: {
+  ethereum: {
     GNOSIS_SAFE: "0x9520b477Aa81180E6DdC006Fc09Fb6d3eb4e807A",
     ETH: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
     WETH: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
@@ -171,8 +171,8 @@ const A = {
 };
 
 const chains = {
-  1: "mainnet",
-  31337: "mainnet",
+  1: "ethereum",
+  31337: "ethereum",
   10: "optimism",
   8453: "base",
 };

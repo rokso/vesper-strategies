@@ -33,6 +33,6 @@ jobs:
       - name: Run tests
         run: forge t --mc Yearn -vvv
         env:
-          MAINNET_FORK_NODE_URL: ${{ secrets.MAINNET_FORK_NODE_URL }}
+          ETHEREUM_FORK_NODE_URL: ${{ secrets.ETHEREUM_FORK_NODE_URL }}
           OPTIMISM_FORK_NODE_URL: ${{ secrets.OPTIMISM_FORK_NODE_URL }}
           BASE_FORK_NODE_URL: ${{ secrets.BASE_FORK_NODE_URL }}

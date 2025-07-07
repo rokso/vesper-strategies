@@ -7,6 +7,6 @@ cache_path = 'cache_forge'
 via-ir = true
 
 [rpc_endpoints]
-ethereum = "${MAINNET_FORK_NODE_URL}"
+ethereum = "${ETHEREUM_FORK_NODE_URL}"
 optimism = "${OPTIMISM_FORK_NODE_URL}"
 base = "${BASE_FORK_NODE_URL}"

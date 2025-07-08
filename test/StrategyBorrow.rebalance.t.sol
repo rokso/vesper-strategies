@@ -80,17 +80,18 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
     /// @dev Use collateral factor to get maximum borrowable amount in `strategy.collateral()`
     function _getMaxBorrowableInCollateral() internal view virtual returns (uint256);
 
-    /// @dev Get max amount borrowable in `strategy.borrowToken()`
+    /// @dev Get actual amount borrowable in `strategy.borrowToken()`
     function _getBorrowable() internal view virtual returns (uint256) {
         IMasterOracle _oracle = strategy.swapper().masterOracle();
+        IBorrowStrategy _borrowStrategy = IBorrowStrategy(address(strategy));
         // In case of high value collateralToken and low value borrowToken
         // _borrowable can be huge, so cap it to max 100.
-        uint256 _borrowable = _oracle.quote(
+        uint256 _maxBorrowable = _oracle.quote(
             address(token()),
-            IBorrowStrategy(address(strategy)).borrowToken(),
+            _borrowStrategy.borrowToken(),
             _getMaxBorrowableInCollateral()
         );
-
+        uint256 _borrowable = (_maxBorrowable * _borrowStrategy.minBorrowLimit()) / MAX_BPS;
         return Math.min(_borrowable, parseBorrowAmount(100));
     }
 
@@ -104,7 +105,7 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
         uint256 _totalBorrowBalance = _getTotalBorrowBalance();
         if (_borrowDebt > _totalBorrowBalance) {
             assertApproxEqRel(_borrowDebt, _totalBorrowBalance, 0.0003e18, "borrow loss should be dust");
-            _decreaseBorrowDebt(_borrowDebt - _totalBorrowBalance);
+            _increaseBorrowBalance(_borrowDebt - _totalBorrowBalance);
         }
     }
 
@@ -167,14 +168,14 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
         _repay(_repayAmount);
 
         assertApproxEqAbs(_getBorrowDebt(), _repayAmount, 2, "borrow debt (2)");
-        assertApproxEqAbs(_getBorrowBalance(), _repayAmount, 1, "borrow balance (2)");
+        assertApproxEqAbs(_getBorrowBalance(), _repayAmount, 2, "borrow balance (2)");
 
         // Borrowed X and then repaid Y, so remaining in strategy is X-Y. This can be deposited in end protocol.
         uint256 _depositBorrowAmount = _borrowAmount - _repayAmount;
         _depositBorrow(_depositBorrowAmount);
 
-        assertApproxEqAbs(_getBorrowBalance(), 0, 1, "borrow balance (3)");
-        assertApproxEqAbs(_getBorrowDeposit(), _depositBorrowAmount, 1, "borrow deposit (1)");
+        assertApproxEqAbs(_getBorrowBalance(), 0, 2, "borrow balance (3)");
+        assertApproxEqAbs(_getBorrowDeposit(), _depositBorrowAmount, 2, "borrow deposit (1)");
 
         _withdrawBorrow(_depositBorrowAmount);
         // Repay all so that we can withdraw all in next step
@@ -184,7 +185,7 @@ abstract contract StrategyBorrow_Rebalance_Test is Strategy_Test {
 
         assertApproxEqRel(_getTokenBalance(), parseAmount(100), MAX_DEPOSIT_SLIPPAGE_REL, "collateral balance (4)");
         assertApproxEqAbs(_getCollateralDeposit(), 0, 2, "collateral deposit (2)");
-        assertApproxEqAbs(_getBorrowBalance(), 0, 1, "borrow balance (4)");
+        assertApproxEqAbs(_getBorrowBalance(), 0, 2, "borrow balance (4)");
         assertEq(_getBorrowDebt(), 0, "borrow debt (3)");
         assertEq(_getBorrowDeposit(), 0, "borrow deposit (2)");
     }

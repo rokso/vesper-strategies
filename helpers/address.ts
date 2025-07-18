@@ -121,6 +121,9 @@ const A = {
         cWETHv3: "0xE36A30D249f7761327fd973001A32010b521b6Fd",
       },
     },
+    ExtraFinance: {
+      LendingPool: "0xBB505c54D71E9e599cB8435b4F0cEEc05fC71cbD",
+    },
     Vesper: {
       keeper: "0xe1aA88d62d3A6b48f5d1D0C997D14C2323180f83", // Strategy keeper contract
       feeCollector: "0x32934AD7b1121DeFC631080b58599A0eaAB89878", // Vesper gnosis safe wallet

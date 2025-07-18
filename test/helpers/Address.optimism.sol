@@ -16,6 +16,9 @@ address constant AAVE_V3_POOL_ADDRESSES_PROVIDER = 0xa97684ead0e402dC232d5A97795
 address constant rewards = 0x443EA0340cb75a160F31A440722dec7b5bc3C2E9;
 address constant cWETHv3 = 0xE36A30D249f7761327fd973001A32010b521b6Fd;
 
+// Extra Finance
+address constant LendingPool = 0xBB505c54D71E9e599cB8435b4F0cEEc05fC71cbD;
+
 // Vesper
 address constant vaUSDC = 0x539505Dde2B9771dEBE0898a84441c5E7fDF6BC0;
 address constant vaETH = 0xCcF3d1AcF799bAe67F6e354d685295557cf64761;

@@ -29,7 +29,10 @@
     "optimism": {
       "CompoundV3_ETH": "0xD7415F7D66f4A459D8D7bA4908D71a7E3E55F905",
       "CompoundV3_ETH_Proxy": "0xD7415F7D66f4A459D8D7bA4908D71a7E3E55F905",
-      "CompoundV3_Implementation": "0xD1BA88d1B4a4163C02bBdE7971A0Bb9a0D2f04f3"
+      "CompoundV3_Implementation": "0xD1BA88d1B4a4163C02bBdE7971A0Bb9a0D2f04f3",
+      "ExtraFinance_Implementation": "0x0E4636400B5672c84512968D83103fABE07Bfc08",
+      "ExtraFinance_Pool1_OP": "0xeb020F5F476546764920dd750F5b003284e37740",
+      "ExtraFinance_Pool1_OP_Proxy": "0xeb020F5F476546764920dd750F5b003284e37740"
     }
   }
 }

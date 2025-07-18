@@ -109,13 +109,17 @@ const A = {
     masterOracle: "0x0aac835162D368F246dc71628AfcD6d2930c47d3",
     swapper: "0x017CBF62b53313d5eE3aD1288daA95CD39AA11fE",
     MORPHO: "0xce95AfbB8EA029495c66020883F87aaE8864AF92",
+    COMP: "0x7e7d4467112689329f7E06571eD0E8CbAd4910eE",
     Aave: {
       V3: {
         poolAddressProvider: "0xa97684ead0e402dC232d5A977953DF7ECBaB3CDb",
       },
     },
     Compound: {
-      V3: { rewards: "0x443EA0340cb75a160F31A440722dec7b5bc3C2E9" },
+      V3: {
+        rewards: "0x443EA0340cb75a160F31A440722dec7b5bc3C2E9",
+        cWETHv3: "0xE36A30D249f7761327fd973001A32010b521b6Fd",
+      },
     },
     Vesper: {
       keeper: "0xe1aA88d62d3A6b48f5d1D0C997D14C2323180f83", // Strategy keeper contract

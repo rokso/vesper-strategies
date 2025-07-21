@@ -16,7 +16,9 @@ address constant Extrafi_XLend_WETH = 0x5A32099837D89E3a794a44fb131CBbAD41f87a8C
 address constant Extrafi_XLend_USDC = 0x23479229e52Ab6aaD312D0B03DF9F33B46753B5e;
 address constant Moonwell_Flagship_ETH = 0xa0E430870c4604CcfC7B38Ca7845B1FF653D0ff1;
 address constant Moonwell_Flagship_USDC = 0xc1256Ae5FF1cf2719D4937adb3bbCCab2E00A2Ca;
+address constant Metronome_msETH = 0x43Cd00De63485618A5CEEBE0de364cD6cBeB26E7;
 
 // Vesper
 address constant vaETH = 0x82562507429876486B60AF4F32390ef0947b3d13;
+address constant vamsETH = 0x913Ece180df83A2B81A4976F83cA88543a0C51b8;
 address constant vaUSDC = 0x1e41238aCd3A9fF90b0DCB9ea96Cf45F104e09Ef;

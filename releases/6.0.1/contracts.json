@@ -17,6 +17,8 @@
       "ExtraFinance_Pool2_USDC": "0x39EbF3dBEf7dC8cDcf585e89618a17098f2504c0",
       "ExtraFinance_Pool2_USDC_Proxy": "0x39EbF3dBEf7dC8cDcf585e89618a17098f2504c0",
       "MorphoVault_Implementation": "0xf9Ba216BF85Dc41d81E94FAC7D6c4f3aef934087",
+      "Morpho_Metronome_msETH": "0xEa3C40D0aA13CD935ac5A4a5C5FE8687678f510f",
+      "Morpho_Metronome_msETH_Proxy": "0xEa3C40D0aA13CD935ac5A4a5C5FE8687678f510f",
       "Morpho_Moonwell_Flagship_ETH": "0x3Dcb9854BE2616F4e44582d1B050e9B7C81a54a2",
       "Morpho_Moonwell_Flagship_ETH_Proxy": "0x3Dcb9854BE2616F4e44582d1B050e9B7C81a54a2",
       "Morpho_Moonwell_Flagship_USDC": "0x846dF44209517a72Ac2aC7dc7C73DBA897679fdA",

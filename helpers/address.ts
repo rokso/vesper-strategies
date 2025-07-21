@@ -153,6 +153,7 @@ const A = {
         Extrafi_XLend_USDC: "0x23479229e52Ab6aaD312D0B03DF9F33B46753B5e",
         Moonwell_Flagship_ETH: "0xa0E430870c4604CcfC7B38Ca7845B1FF653D0ff1",
         Moonwell_Flagship_USDC: "0xc1256Ae5FF1cf2719D4937adb3bbCCab2E00A2Ca",
+        Metronome_msETH: "0x43Cd00De63485618A5CEEBE0de364cD6cBeB26E7",
       },
     },
     Synth: {

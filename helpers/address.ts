@@ -61,8 +61,9 @@ const A = {
     },
     Morpho: {
       vault: {
-        MetronomeMsETH: "0x78B18E07dc43017fcEaabaD0751d6464c0F56b25",
-        MetronomeMsUSD: "0x6859B34a9379122d25A9FA46f0882d434fee36c3",
+        Metronome_msETH: "0x78B18E07dc43017fcEaabaD0751d6464c0F56b25",
+        Metronome_msUSD: "0x6859B34a9379122d25A9FA46f0882d434fee36c3",
+        MEV_Capital_USDC: "0xd63070114470f685b75B74D60EEc7c1113d33a3D",
       },
     },
     Sommelier: {
